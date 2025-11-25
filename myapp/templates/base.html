@@ -1,0 +1,648 @@
+
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script>
+(function() {
+  const html = document.documentElement;
+  html.classList.add('preload');
+
+  // Apply saved sidebar state early
+  const collapsed = localStorage.getItem('sidebar_collapsed') === '1';
+  if (collapsed) {
+    html.classList.add('sidebar-collapsed');
+    document.head.appendChild(style);
+  }
+
+  // Show page only after fully loaded (prevents paint flicker)
+  window.addEventListener('load', () => {
+    html.classList.remove('preload');
+    document.body.style.visibility = 'visible';
+  });
+})();
+</script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Management System</title>
+    <link rel="icon" href="{% static 'images/3.jpg' %}" type="image/png">
+
+    <!-- Bootstrap & Icons -->
+    <link href="{% static 'bootstrap/css/bootstrap.min.css' %}" rel="stylesheet">
+    <link href="{% static 'bootstrap/icons/bootstrap-icons.css' %}" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <!-- In style block -->
+
+    
+    
+
+
+
+    <!-- FullCalendar -->
+    <link rel="stylesheet" href="{% static 'fullcalendar/main.min.css' %}">
+
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'css/base.css' %}" />
+
+    <!-- Toastr CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+    </script>
+
+    <!-- jQuery -->
+    <script src="{% static 'jQuery/jquery-3.6.0.min.js' %}"></script>
+
+    <!-- Bootstrap JS -->
+    <script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+    <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <!-- SweetAlert2 -->
+    <script src="{% static 'swal/js/sweetalert2.min.js' %}"></script>
+
+    <script>
+        // Apply saved theme immediately
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+    
+
+    {% block style %}{% endblock style %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg fixed-top shadow-sm px-3">
+   
+        <div class="d-flex align-items-center">
+        <div>
+         <button class="btn btn-outline-light d-lg-none me-3" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSidebar" aria-controls="offcanvasSidebar">
+              <i class="bi bi-list"></i>
+     </button>
+    </div>
+            <div class="navbar-brand text-end ms-4">
+                <h2 class="mb-0 proms-text fw-bold">
+                    <span class="proms-highlight">ProMS</span> by AvSys
+                </h2>
+            </div>
+        </div>
+        <div class="ms-auto d-flex align-items-center gap-4">
+            <!-- <h4 class="mb-0 proms-text">Workspace</h4> -->
+            <span class="navbar-time proms-text" id="current-time">--:--:--</span>
+             <!-- Notifications Dropdown -->
+                <div class="dropdown">
+                    <a class="btn btn-outline-light position-relative" href="#" role="button" id="notificationsDropdown"  data-bs-toggle="dropdown" aria-expanded="false" data-bs-toggle="tooltip" data-bs-placement="bottom"title="Notifications">
+                        <i class="bi bi-bell"></i>
+                        <span id="notification-badge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger mt-2"></span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationsDropdown" style=" max-height: 400px; overflow-y: auto;">
+                        <li>
+                            <h6 class="dropdown-header">Notifications</h6>
+                        </li>
+                        <div id="notificationDropdownList">
+                            <!-- Notifications will be loaded here --></div>
+                        <li>
+                            <hr class="dropdown-divider">
+                        </li>
+                        <li>
+                            <a class="dropdown-item text-center" href="{% url 'notifications' %}">View all notifications</a>
+                        </li>
+                    </ul>
+                </div>
+
+            <!-- Profile Dropdown -->
+            <div class="dropdown">
+                <a class="btn btn-outline-light dropdown-toggle user-profile" href="#" role="button"
+                   id="userMenu" data-bs-toggle="dropdown" aria-expanded="false">
+                    {% if request.user.userprofile.profile_picture %}
+                        <img src="{{ request.user.userprofile.profile_picture.url }}" alt="User Avatar" class="rounded-circle">
+                    {% else %}
+                        <img src="{% static 'images/avatar-default-icon.png' %}" alt="User Avatar" class="rounded-circle">
+                    {% endif %}
+                    <span id="loggedinUser">{{ request.user.username }}</span>
+                </a>
+              <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userMenu">
+                <li>
+                    <a class="dropdown-item" href="{% url 'profile' %}">
+                    <i class="bi bi-person me-2"></i>Profile
+                    </a>
+                </li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <a class="dropdown-item" href="#" id="logoutbtn">
+                    <i class="bi bi-box-arrow-right me-2"></i>Logout
+                    </a>
+                </li>
+                </ul>
+
+            </div>
+        </div>
+    </nav>
+
+     <!-- Sidebar and Main -->
+            <div class="sidebar p-3" id="sidebar">
+                  <button id="sidebarToggle" class="sidebar-toggle" aria-label="Toggle sidebar" title="Toggle sidebar">
+                    <i class="bi bi-chevron-left"></i>
+                </button>
+                <ul class="nav flex-column nav-menu ">
+                    <li class="nav-item">
+                        <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <i class="bi bi-speedometer2"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a
+            >
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'projects' %}" class="nav-link {% if request.resolver_match.url_name == 'projects' %}active{% endif %}">
+                            <i class="bi bi-folder"></i>
+                            <span class="nav-text">Projects</span>
+                        </a
+            >
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'tasks' %}" class="nav-link {% if request.resolver_match.url_name == 'tasks' %}active{% endif %}">
+                            <i class="bi bi-list-check"></i>
+                            <span class="nav-text">Tasks</span>
+                        </a
+            >
+                    </li>
+                {% if request.user.userprofile.role == "Manager" %}
+
+                    <li class="nav-item">
+                        <a href="{% url 'members' %}" class="nav-link {% if request.resolver_match.url_name == 'members' %}active{% endif %}">
+                            <i class="bi bi-people"></i>
+                            <span class="nav-text">Members</span>
+                        </a
+            >
+                <li class="nav-item">
+                    <a href="{% url 'clients' %}" class="nav-link {% if request.resolver_match.url_name == 'clients' %}active{% endif %}">
+                        <i class="bi bi-person-circle"></i>
+                        <span class="nav-text">Clients</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'team' %}" class="nav-link {% if request.resolver_match.url_name == 'team' %}active{% endif %}">
+                        <i class="bi bi-person-badge"></i>
+                        <span class="nav-text">Teams</span>
+                    </a>
+                </li>
+            {% endif %}
+
+                    <li class="nav-item">
+                        <a href="{% url 'documents' %}" class="nav-link {% if request.resolver_match.url_name == 'documents' %}active{% endif %}">
+<i class="bi bi-file-earmark-richtext"></i>
+                            <span class="nav-text">Documents</span>
+                        </a
+            >
+                    </li>
+                    {% if request.user.is_superuser or request.user.userprofile.role == "Manager" %}
+                    <li class="nav-item">
+            <a href="{% url 'reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
+              ><i class="bi bi-graph-up"></i><span class="nav-text">Reports</span></a
+            >
+          </li>
+                    {% endif %}  
+                    {% if request.user.is_superuser or request.user.userprofile.role == "Manager" or request.user.userprofile.role == "Team Lead" or request.user.userprofile.role == "Developer"  %}
+                    <li class="nav-item">
+                        <a href="{% url 'logs' %}" class="nav-link {% if request.resolver_match.url_name == 'logs' %}active{% endif %}">
+                            <i class="bi bi-journal-text"></i>
+                            <span class="nav-text">Logs</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a href="{% url 'settings' %}" class="nav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
+                            <i class="bi bi-gear"></i>
+                            <span class="nav-text">Settings</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'api_daily_status_create' %}" class="nav-link {% if request.resolver_match.url_name == 'api_daily_status_create' %}active{% endif %}">
+                            <i class="bi bi-bar-chart-line"></i>
+                            <span class="nav-text">Daily Status</span>
+                        </a>
+                    </li>
+          {% if request.user.userprofile.role == "Manager" %}
+                    <li class="nav-item" id="registration">
+                        <a href="{% url 'index' %}" class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+                            <i class="bi bi-person-plus"></i>
+                            <span class="nav-text">Registration</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <!-- AvSys Logo at bottom of sidebar -->
+               <div class="mt-auto text-center" style="margin-bottom: 5px;">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 2px; margin-top:50px;">
+                    <img 
+                    src="{% static 'images/avsys_logo.gif' %}" 
+                    alt="AvSys Logo"
+                    style="width: 65px; height: 60px; border: 2px solid white; border-radius: 50%;"
+                    >
+                    <small style="color: #e9ecef;">@avsys.in</small>
+                </div>
+                </div>
+          
+
+
+            </div>
+            <div class="main-content flex-grow-1">
+                {% block content %}{% endblock %}
+            </div>
+
+
+        <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="offcanvasSidebar">
+    <div class="offcanvas-header">
+      <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    </div>
+    <div class="offcanvas-body p-0">
+      <div class="sidebar" style="position: static; height: 100vh;">
+            <ul class="nav flex-column nav-menu mt-4">
+                    <li class="nav-item">
+                        <a href="{% url 'dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                            <i class="bi bi-speedometer2"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a
+            >
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'projects' %}" class="nav-link {% if request.resolver_match.url_name == 'projects' %}active{% endif %}">
+                            <i class="bi bi-folder"></i>
+                            <span class="nav-text">Projects</span>
+                        </a
+            >
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'tasks' %}" class="nav-link {% if request.resolver_match.url_name == 'tasks' %}active{% endif %}">
+                            <i class="bi bi-list-check"></i>
+                            <span class="nav-text">Tasks</span>
+                        </a
+            >
+                    </li>
+                    {% if request.user.userprofile.role == "Manager" %}
+
+                    <li class="nav-item">
+                        <a href="{% url 'members' %}" class="nav-link {% if request.resolver_match.url_name == 'members' %}active{% endif %}">
+                            <i class="bi bi-people"></i>
+                            <span class="nav-text">Members</span>
+                        </a >
+                    </li>
+                <li class="nav-item">
+                    <a href="{% url 'clients' %}" class="nav-link {% if request.resolver_match.url_name == 'clients' %}active{% endif %}">
+                        <i class="bi bi-person-circle"></i>
+                        <span class="nav-text">Clients</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="{% url 'team' %}" class="nav-link {% if request.resolver_match.url_name == 'team' %}active{% endif %}">
+                        <i class="bi bi-person-badge"></i>
+                        <span class="nav-text">Teams</span>
+                    </a>
+                </li>
+            {% endif %}
+
+                    <li class="nav-item">
+                        <a href="{% url 'documents' %}" class="nav-link {% if request.resolver_match.url_name == 'documents' %}active{% endif %}">
+<i class="bi bi-file-earmark-richtext"></i>
+                            <span class="nav-text">Documents</span>
+                        </a
+            >
+                    </li>
+                    {% if request.user.is_superuser or request.user.userprofile.role == "Manager" %}
+                    <li class="nav-item">
+            <a href="{% url 'reports' %}" class="nav-link {% if request.resolver_match.url_name == 'reports' %}active{% endif %}"
+              ><i class="bi bi-graph-up"></i><span class="nav-text">Reports</span></a
+            >
+          </li>
+                    {% endif %}  
+                    {% if request.user.is_superuser or request.user.userprofile.role == "Manager" or request.user.userprofile.role == "Team Lead" or request.user.userprofile.role == "Developer"  %}
+                    <li class="nav-item">
+                        <a href="{% url 'logs' %}" class="nav-link {% if request.resolver_match.url_name == 'logs' %}active{% endif %}">
+                            <i class="bi bi-journal-text"></i>
+                            <span class="nav-text">Logs</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        <a href="{% url 'settings' %}" class="nav-link {% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
+                            <i class="bi bi-gear"></i>
+                            <span class="nav-text">Settings</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="{% url 'api_daily_status_create' %}" class="nav-link {% if request.resolver_match.url_name == 'api_daily_status_create' %}active{% endif %}">
+                            <i class="bi bi-bar-chart-line"></i>
+                            <span class="nav-text">Daily Status</span>
+                        </a>
+                    </li>
+                    {% comment %}
+                    <!-- <li class="nav-item">
+            <a href="{% url 'send_email' %}" class="nav-link {% if request.resolver_match.url_name == 'send_email' %}active{% endif %}"
+              ><i class="bi bi-envelope"></i><span class="nav-text">Mail Status</span></a
+            >
+          </li>  -->
+                    {% endcomment %}
+          {% if request.user.userprofile.role == "Manager" %}
+                    <li class="nav-item" id="registration">
+                        <a href="{% url 'index' %}" class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}">
+                            <i class="bi bi-person-plus"></i>
+                            <span class="nav-text">Registration</span>
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                
+                <!-- AvSys Logo at bottom of mobile sidebar -->
+                <div class="mt-auto text-center py-4" style="margin-bottom: 10px;">
+                    <img style="width: 50px; height: 40px; border: 2px solid white; border-radius: 50%;" 
+                         src="{% static 'images/avsys_logo.gif' %}" 
+                         alt="AvSys Logo">
+                    <div class="mt-2">
+                        <small style="color: #e9ecef;">@avsys.in</small>
+                    </div>
+                </div>
+      </div>
+    </div>
+  </div>
+  
+
+    <footer class="footer">
+        &copy; AvSys International India Pvt Ltd., All rights reserved.
+    </footer>
+
+    <!-- Scripts -->
+        <script src="{% static 'chartjs/chart.js' %}"></script>
+        <script src="{% static 'fullcalendar/main.min.js' %}"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+        <!-- Add this inside <head> or before your script -->
+        <script src="{% static 'swal/js/sweetalert2.min.js' %}"></script>
+        {% block script %}{% endblock script %}
+
+
+    <script>
+      toastr.options = {
+            "closeButton": true,        // Adds a close (×) button
+            "debug": false,
+            "newestOnTop": true,
+            "progressBar": true,        // Adds a timer progress bar
+            "positionClass": "toast-top-right", // You can change this (top-center, bottom-right, etc.)
+            "preventDuplicates": true,
+            "onclick": null,
+            "showDuration": "300",
+            "hideDuration": "1000",
+            "timeOut": "5000",          // Auto-close after 5 seconds
+            "extendedTimeOut": "1000",
+            "showEasing": "swing",
+            "hideEasing": "linear",
+            "showMethod": "fadeIn",
+            "hideMethod": "fadeOut"
+            };
+        // -------------------- Helpers --------------------
+        function getCSRFToken() {
+            const name = 'csrftoken';
+            const cookies = document.cookie.split(';');
+            for (let cookie of cookies) {
+                const c = cookie.trim();
+                if (c.startsWith(name + '=')) return decodeURIComponent(c.substring(name.length + 1));
+            }
+            return '';
+        }
+
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleString();
+        }
+
+        function handleSessionExpired() {
+            alert("Session expired. Please log in again.");
+            window.location.href = '/';
+        }
+
+        // -------------------- Time --------------------
+        function updateTime() {
+            document.getElementById("current-time").textContent = new Date().toLocaleTimeString();
+        }
+        setInterval(updateTime, 1000);
+        updateTime();
+
+        // -------------------- Tooltips --------------------
+        function initTooltips() {
+            const triggers = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            triggers.map(el => new bootstrap.Tooltip(el));
+        }
+        initTooltips();
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const offcanvas = document.querySelector('.offcanvas');
+    const bsOffcanvas = bootstrap.Offcanvas.getOrCreateInstance(offcanvas);
+
+    function handleResize() {
+        if (window.innerWidth >= 992) {  // desktop breakpoint
+            // Hide offcanvas if open
+            if (offcanvas.classList.contains('show')) {
+                bsOffcanvas.hide();
+            }
+        }
+    }
+
+    // Run on resize
+    window.addEventListener('resize', handleResize);
+    
+    // Optional: also run on page load
+    handleResize();
+});
+
+   
+    document.addEventListener('DOMContentLoaded', function () {
+        // Initialize tooltips
+        initTooltips();
+
+        const toggleBtn = document.getElementById('sidebarToggle');
+        const COLLAPSE_KEY = 'sidebar_collapsed';
+
+        // Restore sidebar state early
+        if (localStorage.getItem(COLLAPSE_KEY) === '1') {
+            document.documentElement.classList.add('sidebar-collapsed');
+        }
+
+        // Toggle sidebar on click
+        toggleBtn?.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            document.documentElement.classList.toggle('sidebar-collapsed');
+            localStorage.setItem(
+                COLLAPSE_KEY,
+                document.documentElement.classList.contains('sidebar-collapsed') ? '1' : '0'
+            );
+
+            // Reinitialize tooltips after sidebar collapse/expand
+            initTooltips();
+        });
+
+        // Handle responsive behavior (optional)
+        function handleSidebarVisibility() {
+            if (window.innerWidth < 992) {  // desktop breakpoint
+                document.getElementById('sidebar')?.classList.add('d-none');
+                document.documentElement.classList.remove('sidebar-collapsed');
+            } else {
+                document.getElementById('sidebar')?.classList.remove('d-none');
+                if (localStorage.getItem(COLLAPSE_KEY) === '1') {
+                    document.documentElement.classList.add('sidebar-collapsed');
+                }
+            }
+        }
+
+        window.addEventListener('resize', handleSidebarVisibility);
+        handleSidebarVisibility();
+
+        // Remove preload only after everything is loaded
+        window.addEventListener('load', () => {
+            document.documentElement.classList.remove('preload');
+        });
+    });
+
+
+
+
+        // -------------------- Theme --------------------
+        function applyTheme(theme) {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            if (window.calendar) window.calendar.render();
+            if (window.charts) window.charts.forEach(chart => chart.update());
+        }
+
+        window.toggleTheme = function() {
+            const newTheme = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+            applyTheme(newTheme);
+        }
+
+        window.addEventListener('storage', e => { if(e.key === 'theme') applyTheme(e.newValue); });
+
+        // -------------------- Logout --------------------
+        document.getElementById("logoutbtn").onclick = function () {
+            fetch("/logout/", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${localStorage.getItem("access_token")}`,
+                    'X-CSRFToken': getCSRFToken()
+                },
+                credentials: 'include',
+                body: JSON.stringify({ refresh_token: localStorage.getItem("refresh_token") })
+            }).then(res => {
+                if (res.ok) {
+                    localStorage.removeItem("access_token");
+                    localStorage.removeItem("refresh_token");
+                    localStorage.removeItem("role");
+                    window.location.href = "/";
+                }
+            }).catch(console.error);
+        };
+
+        // -------------------- Notifications --------------------
+        const notificationBadge = document.getElementById('notification-badge');
+        const notificationList = document.getElementById('notificationDropdownList');
+        let notificationSocket = null;
+
+       function updateNotificationCount(count) {
+            if (!notificationBadge) return;
+            try { localStorage.setItem('notif_count', String(count)); } catch (e) {}
+            notificationBadge.textContent = String(count);
+            notificationBadge.style.display = 'block';
+        }
+
+
+       function loadDropdownNotifications() {
+        fetch('/notifications/')
+            .then(res => res.json())
+            .then(notifications => {
+                // Do nothing with DOM, just process or log
+                const recent = notifications.slice(0, 5);
+                console.log('Recent notifications:', recent);
+
+                // Example: you could return them if needed
+                return recent;
+            })
+            .catch(err => {
+                console.error('Error fetching notifications:', err);
+            });
+}
+
+
+        function markNotificationAsRead(id) {
+            fetch(`/notifications/${id}/mark-read/`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCSRFToken() }
+            }).then(res => res.json()).then(data => {
+                if (data.status === 'success') { loadDropdownNotifications(); updateUnreadCount(); }
+            });
+        }
+
+        function updateUnreadCount() {
+            fetch('/notifications/count/').then(res => res.json()).then(data => updateNotificationCount(data.count));
+        }
+
+        function connectNotificationSocket() {
+            const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+            const wsUrl = `${protocol}//${window.location.host}/ws/notifications/`;
+            notificationSocket = new WebSocket(wsUrl);
+
+            notificationSocket.onopen = () => console.log('Notification WebSocket connected');
+            notificationSocket.onmessage = e => {
+                try {
+                    const data = JSON.parse(e.data);
+                    if (data.type === 'notification_count') {
+                        updateNotificationCount(data.count);
+                    } else if (data.type === 'notification') {
+                        loadDropdownNotifications();      // reload dropdown
+                        updateNotificationCount(data.count); // update badge
+                        // optional: show toast/alert for data.message
+                    }
+                } catch(err){ console.error(err); }
+            };
+
+            notificationSocket.onclose = e => setTimeout(connectNotificationSocket, 3000);
+            notificationSocket.onerror = console.error;
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Load initial notifications & socket
+            try {
+                const cached = localStorage.getItem('notif_count');
+                if (cached !== null && notificationBadge) {
+                    notificationBadge.textContent = cached;
+                    notificationBadge.style.display = 'block';
+                } else if (notificationBadge) {
+                    // avoid flicker by hiding until fetched
+                    notificationBadge.style.display = 'none';
+                }
+            } catch (e) {}
+
+            loadDropdownNotifications();
+            // fetch actual count and update/store; ensures consistency after navigation
+            updateUnreadCount();
+            connectNotificationSocket();
+
+            notificationList?.addEventListener('click', e => {
+                if (e.target.classList.contains('mark-read')) markNotificationAsRead(e.target.dataset.id);
+            });
+        });
+
+        window.addEventListener('beforeunload', () => { if(notificationSocket) notificationSocket.close(); });
+
+    </script>
+
+    {% block extra_js %}
+    {% endblock %}
+</body>
+</html>

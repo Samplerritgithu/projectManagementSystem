@@ -1,0 +1,190 @@
+
+/* === DARK MODE TABLE STYLES === */
+
+body{
+    overflow-x:auto;
+    overflow-y: auto;
+}
+[data-theme="dark"] .table {
+    background-color: #1e1e1e;
+    color: white;
+}
+
+[data-theme="dark"] .table thead th {
+    background-color: #2a2a2a;
+    color: white;
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .table td {
+    color: white;
+    background-color: #1e1e1e;
+    border-color: var(--border-color);
+}
+
+[data-theme="dark"] .table tbody tr:hover {
+    background-color: #2d2d2d;
+    color: white;
+}
+
+[data-theme="dark"] .badge {
+    color: black;
+}
+
+/* === TABLE HEADER === */
+.table thead th {
+    background: linear-gradient(135deg, #2a68c4 0%, #4a8ef0 100%);
+    color: white;
+    padding: 1rem 1.5rem;
+    font-weight: 600;
+    position: sticky;
+    top: 0;
+    z-index: 3;      
+}
+
+/* === TABLE ALIGNMENT FIX (when no logs) === */
+.table-responsive table {
+    width: 100%;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+.table-responsive thead,
+.table-responsive tbody tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+}
+
+.table-responsive tbody {
+    display: block;
+    min-height: 200px; /* Keeps height when no logs */
+}
+
+.table-responsive thead {
+    width: calc(100% - 6px); /* Adjust for scrollbar */
+}
+
+/* === CARD & LAYOUT === */
+.card {
+    background-color: var(--card-bg);
+    border-color: var(--border-color);
+    color: var(--text-color);
+}
+
+.container-fluid {
+    min-height: 100vh;
+}
+
+.card-body {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .card-body {
+    background: rgba(30, 30, 30, 0.95);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* === FILTERS === */
+.filters-section {
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] .filters-section {
+    background: rgba(30, 30, 30, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* === SCROLLBAR === */
+.table-responsive {
+    max-height: 600px;
+    overflow-y: auto;
+}
+
+.table-responsive::-webkit-scrollbar {
+    width: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f8f9fa;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+    transition: background 0.3s ease;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* Firefox scrollbar */
+.table-responsive {
+    scrollbar-width: thin;
+}
+
+[data-theme="dark"] .table-responsive::-webkit-scrollbar-track {
+    background: #2d2d2d;
+}
+
+[data-theme="dark"] .table-responsive::-webkit-scrollbar-thumb {
+    background: #666;
+}
+
+[data-theme="dark"] .table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #888;
+}
+
+/* === EMPTY ROW === */
+.table tbody tr.empty-row td {
+    height: 150px;
+    font-size: 1.1rem;
+    color: #888;
+    text-align: center;
+    vertical-align: middle;
+}
+/* No log entries message styling */
+  #noLogFound .no-log-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    min-height: 220px;
+    width: 100%;
+    text-align: center;
+    gap: 0.75rem;
+  }
+  
+  #noLogFound i {
+    font-size: 3rem;
+    color: #6c757d;
+    line-height: 1;
+    opacity: 0.7;
+  }
+  
+  #noLogFound p {
+    margin: 0;
+  }
+  
+  #noLogFound p:first-of-type {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+  }
+  
+  #noLogFound p:last-of-type {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    opacity: 0.7;
+  }
+  

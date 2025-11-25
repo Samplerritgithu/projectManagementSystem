@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Help{% endblock title %}
+
+{% block helpRequest %}
+    <div class="container" style="margin-top: 50px;">
+        <h2 class="text-center mb-4">Help Requests</h2>
+
+        <!-- Table to display help requests -->
+        <table class="table table-bordered table-striped">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Type</th>
+                    <th>Question</th>
+                    <th>Submitted At</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for helpRequest in helpRequests %}
+                    <tr>
+                        <td>{{ helpRequest.id }}</td>
+                        <td>{{ helpRequest.help_type }}</td>
+                        <td>{{ helpRequest.question }}</td>
+                        <td>{{ helpRequest.created_at }}</td>
+                        <td>
+                            <a href="{% url 'delete_help_request' helpRequest.id %}" class="btn btn-warning">Delete</a>
+                    </tr>
+                {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No help requests found</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

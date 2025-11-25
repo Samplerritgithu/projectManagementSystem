@@ -1,0 +1,296 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/document.css' %}" />
+
+{% endblock style %}
+{% block content %}
+
+<div class="container-fluid  pb-2">
+      <div class="d-flex align-items-center justify-content-between " style="min-height: 60px;">
+        <h3 class="mb-0 flex-grow-1 text-center">Documents</h3>
+        <!-- {% if request.user.userprofile.role == "Manager" %}
+        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDocumentModal">
+          <i class="bi bi-file-earmark-plus"></i> Upload Document
+        </button>
+        {% endif %} -->
+      </div>
+
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-4">
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-search"></i></span>
+                  <input type="text" class="form-control" id="documentSearch" placeholder="Search documents..." />
+                </div>
+              </div>
+              <div class="col-md-3">
+                <select class="form-select" id="projectFilter">
+                  <option value="">All Projects</option>
+                  {% for project in projects %}
+                  <option value="{{ project.id }}">{{ project.name }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div class="col-md-3">
+                <button class="btn btn-outline-secondary w-100" id="resetFilters">
+                  <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+     <div class="row g-3" id="documentsGrid">
+  {% for document in documents %}
+  <div class="col-sm-6 col-md-4 col-lg-3 document-card" data-project="{{ document.project.id }}">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-3">
+          <div class="d-flex align-items-center gap-2">
+            <img src="{% static 'images/Document.png' %}" alt="Document"
+                 style="width: 28px; height: 28px; object-fit: cover;" />
+            <h5 class="card-title mb-0" title="{{ document.title }}">{{ document.title }}</h5>
+            <span class="badge bg-primary project-name-badge">{{ document.project.name }}</span>
+
+          </div>
+        </div>
+
+        <div class="card-text">
+          <p>
+            <strong>File:</strong>
+            <span class="file-name" title="{{ document.file_name }}">{{ document.file_name }}</span>
+          </p>
+          <p><strong>Uploaded by:</strong> {{ document.uploaded_by.username }}</p>
+          <p><strong>Upload date:</strong> {{ document.uploaded_at }}</p>
+        </div>
+
+        <div class="btn-group" role="group">
+          <button class="btn btn-sm btn-outline-info view-document"
+                  data-document-id="{{ document.id }}"
+                  data-file-url="{{ document.file_url }}"
+                  data-file-ext="{{ document.file_extension }}"
+                  data-file-name="{{ document.file_name }}"
+                  data-bs-toggle="modal"
+                  title="View Document"
+                  data-bs-target="#viewDocumentModal">
+            <i class="bi bi-eye"></i>
+          </button>
+
+          {% if request.user.userprofile.role == "Manager" or request.user.userprofile.role == "Team Lead" %}
+          <button class="btn btn-sm btn-outline-primary edit-document"
+                  data-document-id="{{ document.id }}"
+                  data-bs-toggle="modal"
+                  title="Edit Document"
+                  data-bs-target="#editDocumentModal">
+            <i class="bi bi-pencil"></i>
+          </button>
+
+          <button class="btn btn-sm btn-outline-danger delete-document"
+                  data-document-id="{{ document.id }}"
+                  data-bs-toggle="modal"
+                  title="Delete Document"
+                  data-bs-target="#deleteDocumentModal">
+            <i class="bi bi-trash"></i>
+          </button>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+
+  <div id="noDocumentFound"class="text-center" style="display: none;">
+    <i class="bi bi-search"></i>
+    <p>No matching Documents found</p>
+  </div>
+</div>
+
+
+
+<div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-primary fw-semibold" id="addDocumentModalLabel">
+          <i class="bi bi-file-earmark-plus me-2" style="color: #fd7e14;"></i> Upload Document
+        </h5>
+      </div>
+      <form method="post" action="{% url 'documents' %}" enctype="multipart/form-data" id="addDocumentForm" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add" />
+        <div class="modal-body">
+          <!-- Title -->
+          <div class="mb-3">
+            <label for="title" class="form-label text-primary fw-semibold">
+              <i class="bi bi-card-text me-2" style="color: #89AD4FFF;"></i> Title <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control" id="title" name="title" maxlength="50" />
+            <div class="invalid-feedback"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="project" class="form-label text-primary fw-semibold">
+              <i class="bi bi-folder2-open me-2" style="color: #24AB6CFF;"></i> Project <span class="text-danger">*</span>
+            </label>
+            <select class="form-select" id="project" name="project">
+              <option value="">📂 Select Project</option>
+              {% for project in projects %}
+              <option value="{{ project.id }}">{{ project.name }}</option>
+              {% endfor %}
+            </select>
+            <div class="invalid-feedback"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="file" class="form-label text-primary fw-semibold">
+              <i class="bi bi-file-earmark-arrow-up me-2" style="color: #BF50A5FF;"></i> File <span class="text-danger">*</span>
+            </label>
+            <input type="file" class="form-control" id="file" name="file" />
+            <div class="invalid-feedback"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary">
+            <i class="bi bi-x-circle me-1"></i> Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-upload me-1"></i> Upload
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+
+<div class="modal fade" id="editDocumentModal" tabindex="-1" aria-labelledby="editDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-primary fw-semibold" id="editDocumentModalLabel">
+          <i class="bi bi-pencil-square me-2" style="color: #9BAAEFFF;"></i> Edit Document
+        </h5>
+      </div>
+
+      <form method="post" action="{% url 'documents' %}" enctype="multipart/form-data" id="editDocumentForm" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="edit" />
+        <input type="hidden" name="document_id" id="edit_document_id" />
+
+        <div class="modal-body">
+          <!-- Title -->
+          <div class="mb-3">
+            <label for="edit_title" class="form-label text-primary fw-semibold">
+              <i class="bi bi-card-text me-2" style="color: #B37830FF;"></i> Title <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control" id="edit_title" name="title" required maxlength="50" />
+            <div class="invalid-feedback">Title is required and must be under 50 characters.</div>
+          </div>
+
+          <!-- Project -->
+          <div class="mb-3">
+            <label for="edit_project" class="form-label text-primary fw-semibold">
+              <i class="bi bi-folder2-open me-2" style="color: #C0CC15FF;"></i> Project <span class="text-danger">*</span>
+            </label>
+            <select class="form-select" id="edit_project" name="project" required>
+              {% for project in projects %}
+              <option value="{{ project.id }}">{{ project.name }}</option>
+              {% endfor %}
+            </select>
+            <div class="invalid-feedback">Please select a project.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="edit_file" class="form-label text-primary fw-semibold">
+              <i class="bi bi-file-earmark-arrow-up me-2" style="color: #D571CDFF;"></i> File
+            </label>
+            <input type="file" class="form-control" id="edit_file" name="file" />
+            <div id="current_file_info" class="mt-2" title=""></div>
+            <div class="invalid-feedback">Only PDF files are allowed.</div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i> Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-save me-1"></i> Update
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+
+        <div class="modal fade" id="viewDocumentModal" tabindex="-1" aria-labelledby="viewDocumentModalLabel" aria-hidden="true">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <div class="modal-header d-flex justify-content-between align-items-center">
+              <h5 class="modal-title mb-0" id="viewDocumentModalLabel">PDF Preview</h5>
+              <div>
+                <a href="#" id="pdfDownloadBtn" class="btn btn-sm btn-outline-primary" download>
+                  <i class="bi bi-download"></i> 
+                </a>
+              </div>
+            </div>
+
+              <div class="modal-body" style="max-height: 80vh; overflow-y: auto; overflow-x: hidden; position: relative;">
+                <iframe id="docIframe" style="display:none; width:100%; height:75vh; border:0;" allowfullscreen></iframe>
+                <div id="pdfContainer" style="display: none; flex-direction: column; align-items: center; width: 100%; gap: 1rem;"></div>
+                <div id="filePreviewMessage" class="mt-3 text-muted text-center"></div>
+                <div id="downloadFallback" class="mt-3 text-center" style="display: none;">
+                  <a href="#" id="downloadLink" class="btn btn-primary">
+                    <i class="bi bi-download"></i> Download PDF
+                  </a>
+                </div>
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+    <!-- Delete Document Modal -->
+        <div class="modal fade" id="deleteDocumentModal" tabindex="-1" aria-labelledby="deleteDocumentModalLabel" aria-hidden="true">
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <div class="modal-header bg-danger ">
+                <h5 class="modal-title " id="deleteDocumentModalLabel">Delete Document</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+              </div>
+              <div class="modal-body">
+                <p>Are you sure you want to delete this document? This action cannot be undone.</p>
+              </div>
+              <div class="modal-footer">
+                <form method="post" action="{% url 'documents' %}" id="deleteDocumentForm">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="delete" />
+                  <input type="hidden" name="document_id" id="delete_document_id" />
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-danger">Delete</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+
+</div>
+
+
+ 
+ 
+{% endblock %}
+{% block script %}
+<script>
+const PDF_VIEWER_URL = "{% static 'pdfjs-5.3.31-dist/web/viewer.html' %}";
+const CURRENT_USERNAME = "{{ request.user.username|escapejs }}";
+</script>
+<script src="{% static 'js/documents.js' %}"></script>
+{% endblock script %}

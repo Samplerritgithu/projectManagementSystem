@@ -1,0 +1,85 @@
+@media (max-width: 900px) {
+  .d-flex.align-items-center.justify-content-between {
+    min-height: 124px !important;
+  }
+}
+/* Add black border around client cards */
+/* Black border with opacity around client cards */
+.client-card .card {
+    border: 1px solid rgba(97, 94, 94, 0.5) !important;
+    border-radius: 0.5rem; /* keeps rounded corners */
+}
+
+/* Single-line ellipsis for long client names */
+.client-card .card-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Cross-browser ellipsis for inline values (company, email, phone, etc.) */
+.client-card .card-text p {
+  display: flex;               /* put label and value on one line */
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 0.35rem;
+}
+
+.client-card .card-text p strong {
+  flex: 0 0 auto;              /* labels don't shrink */
+}
+
+.client-card .card-text span {
+  flex: 1 1 auto;              /* values take remaining space */
+  min-width: 0;                /* allow flex item to shrink for ellipsis */
+  display: block;              /* needed for ellipsis with width control */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;         /* single-line ellipsis */
+  word-break: break-word;
+}
+
+/* Address also uses single-line ellipsis */
+.client-card .card-text .address-text {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  word-break: break-word;
+}
+
+  
+/* No matching teams message styling */
+#noClientFound {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  min-height: 300px;
+}
+
+#noClientFound i {
+  font-size: 3rem;
+  color: #ccc;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+#noClientFound p {
+  margin: 0;
+}
+
+#noClientFound p:first-of-type {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+#noClientFound p:last-of-type {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  opacity: 0.7;
+}

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Show Blogs{% endblock title %}
+
+{% block blog %}
+    <div class="container mt-4">
+        <h1 class="text-center">All Blogs</h1>
+
+        {% if blog %}
+            {% for blog_item in blog %}
+                <div class="card mb-4">
+                    <div class="d-flex justify-content-end">
+                        <a href="{% url 'delete_blog' blog_item.id %}" class="btn btn-warning" style="width: 100px;">Delete</a>
+                    </div>
+                                        <div class="card-header">
+                        <a href="{% url 'open_blog' blog_item.id %}" class="h4 text-decoration-none">{{ blog_item.title }}</a>
+                    </div>
+                    <div class="card-body">
+                        <p>{{ blog_item.description }}</p>
+                    </div>
+                </div>
+                {% endfor %}
+
+
+        {% else %}
+            <p>No blogs available.</p>
+        {% endif %}
+    </div>
+{% endblock blog %}

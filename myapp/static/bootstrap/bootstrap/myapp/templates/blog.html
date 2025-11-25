@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Blog{% endblock title %}
+{% block blog %}
+      <div class="d-flex justify-content-end mt-4" style="margin-top: 20px;">
+    <a href="{% url 'show_blog' %}" class="btn btn-dark">Show Blog</a>
+</div>
+
+
+    <!-- Blog creation form -->
+    {% if not is_detail %}
+    <div class="container" mt-2>
+        <div class="card p-4">
+       
+    <h1 class="text-center">Create a New Blog</h1>
+    <form >
+        {% csrf_token %}
+
+        <div class="mb-3">
+        
+        <!-- Blog Title and Description -->
+        <label for="title" class="form-label">Title:</label>
+        <input type="text" id="title" name="title" class="form-control"><br><br>
+        </div>
+        <div class="mb-3">
+        
+        <label for="description"class="form-label">Description:</label>
+        <textarea id="description" name="description" class="form-control"></textarea><br><br>
+        </div>
+        
+        <!-- Paragraph Title and Description -->
+        <h3>Paragraph</h3>
+        <div class="mb-3">
+        <label for="paratitle"class="form-label">Paragraph Title:</label>
+        <input type="text" id="paratitle" name="paratitle" class="form-control"><br><br>
+        </div>
+        <div class="mb-3">
+        <label for="paradescription"class="form-label">Paragraph Description:</label>
+        <textarea id="paradescription" name="paradescription" class="form-control"></textarea><br><br>  
+        </div>
+        <div class="mb-3">
+            <label for="image">Image:</label>
+            <input type="file" id="image" name="image" accept="image/*" class="form-control"><br><br>
+            </div>  
+        <div class="text-center">
+        <button type="button" onclick="addparagraph()" class="btn btn-primary">Add Paragraph</button><br><br> 
+        </div> 
+        
+        <div class="AddParagraphs mb-3"></div>
+
+        <!-- Hidden field to store added paragraphs -->
+        <input type="hidden" id="paragraphs_data" name="paragraphs_data" class="form-control">
+        
+        <div class="text-center">
+        <button type="submit" id="submitbtn" class="btn btn-success">Submit</button>
+        </div>
+    </form>
+</div>
+</div>
+    <hr>
+
+    {% endif %}
+
+    <script>
+        let paragraphs = [];
+        let paracount=0;
+
+        function addparagraph() {
+            let paratitle = document.getElementById("paratitle").value;
+            let paradescription = document.getElementById("paradescription").value;
+            let image = document.getElementById("image").files[0];
+
+            if (paratitle && paradescription) {
+                paragraphs.push({
+                    paratitle: paratitle,
+                    paradescription: paradescription,
+                    image: image
+                });
+                console.log(paragraphs);
+
+                document.getElementById("paratitle").value = "";
+                document.getElementById("paradescription").value = "";
+
+            }
+            paracount++
+            console.log('paracount inside', paracount)
+
+        }
+        document.getElementById("submitbtn").addEventListener("click", function () {
+            event.preventDefault();
+            alert('inside submit button')
+           let maintitle = document.getElementById("title").value;
+              let maindescription = document.getElementById("description").value;
+              const formData = new FormData();
+                console.log('paracount submitbtn', paracount)
+                
+                formData.append("title", maintitle);
+
+                formData.append("description", maindescription);
+                formData.append("paracount", paracount);
+                paragraphs.forEach((paragraph, i) => {
+                    formData.append(`paratitle_${i}`, paragraph.paratitle);
+                    formData.append(`paradescription_${i}`, paragraph.paradescription);
+                    formData.append(`image_${i}`, paragraph.image);
+                });
+            let csrf_token = document.querySelector("[name=csrfmiddlewaretoken]").value;
+            console.log('csrf_token', csrf_token)
+            fetch("{% url 'blog_list' %}", {
+                method: "POST",
+                body: formData,
+                headers: {
+                    "X-CSRFToken": csrf_token
+                }
+            }).then(response => {
+                if (response.ok) {
+                    alert("Blog created successfully");
+                    window.location.reload();
+                    
+                } else {
+                    alert("Failed to create blog");
+                }
+            });
+
+        });
+    </script>
+
+{% endblock blog %}

@@ -1,0 +1,178 @@
+<!-- members.html -->
+{% extends 'base.html' %} 
+{% load static %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/members.css' %}" />
+<link rel="stylesheet" href="{% static 'css/modals.css' %}">
+
+{% endblock style %}
+ {% block content %}
+
+<div class="container-fluid  pb-2">
+ <div class="d-flex align-items-center justify-content-center " style="min-height: 60px;">
+        <h3>Members</h3>
+    </div>
+
+<!-- Filters and Search -->
+  <div class="card mb-4">
+    <div class="card-body">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-search"></i></span>
+            <input
+              type="text"
+              class="form-control"
+              id="memberSearch"
+              placeholder="Search members..."
+            />
+          </div>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" id="projectFilter">
+            <option value="">All Projects</option>
+            {% for project in projects %}
+            <option value="{{ project.id }}">{{ project.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-3">
+          <select class="form-select" id="roleFilter">
+            <option value="">All Roles</option>
+            {% for role in role_choices %}
+            <option value="{{ role }}">{{ role }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-md-2">
+          <button class="btn btn-outline-secondary w-100" id="resetFilters">
+            <i class="bi bi-arrow-counterclockwise"></i> Reset
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Members Cards -->
+<div class="row gx-1 gy-2" id="membersGrid">
+    {% for member in members %}
+<div class="member-card col-md-4 col-lg-3"
+     data-user-id="{{ member.user.id }}" 
+     data-role="{{ member.roles }}" 
+     data-project-ids="{% for p in member.projects_data %}{{ p.id }}{% if not forloop.last %},{% endif %}{% endfor %}"
+     data-project-names="{{ member.project_names|join:',' }}"
+     data-joined="{{ member.joined_at|date:'Y-m-d' }}">
+      <div class="card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex align-items-center gap-2">
+         {% with roles_lower=member.roles|lower %}
+  {% if member.projects_data|length > 1 and member.roles|cut:","|length > 1 %}
+    <!-- Multiple projects and roles -->
+    <img src="{% static 'images/aaaa.png' %}" alt="Multi Member"
+         style="width:50px;height:60px;object-fit:cover;">
+  {% elif member.projects_data|length > 1 %}
+    <!-- Multiple projects only -->
+    <img src="{% static 'images/bbb.png' %}" alt="Multi Project"
+         style="width:50px;height:60px;object-fit:cover;">
+  {% elif 'frontend' in roles_lower or 'backend' in roles_lower or 'ai/ml' in roles_lower %}
+    <img src="{% static 'images/developer.png' %}" alt="Developer"
+         style="width:50px;height:60px;object-fit:cover;">
+  {% elif 'designer' in roles_lower %}
+    <img src="{% static 'images/designer.png' %}" alt="Designer"
+         style="width:50px;height:60px;object-fit:cover;">
+  {% elif 'tester' in roles_lower or 'manual' in roles_lower or 'automation' in roles_lower %}
+    <img src="{% static 'images/tester.png' %}" alt="Tester"
+         style="width:50px;height:60px;object-fit:cover;">
+  {% elif 'team lead' in roles_lower %}
+    <img src="{% static 'images/team.png' %}" alt="Team Lead"
+         style="width:50px;height:60px;object-fit:cover;">
+  {% elif roles_lower %}
+    <!-- Other roles not listed above -->
+    <img src="{% static 'images/other.png' %}" alt="Other Role"
+         style="width:50px;height:60px;object-fit:cover;">
+  {% else %}
+    <!-- Default fallback -->
+    <img src="{% static 'images/member.png' %}" alt="Member"
+         style="width:50px;height:60px;object-fit:cover;">
+  {% endif %}
+{% endwith %}
+              <h5 class="card-title mb-0 d-flex align-items-center">{{ member.user.username }}</h5>
+            </div>
+          </div>
+
+
+          <p class="card-text"><strong>Projects:</strong> {{ member.project_names }}</p>
+          <p class="card-text"><strong>Roles:</strong> {{ member.roles }}</p>
+          <p class="card-text mt-2"><strong>Joined At:</strong> {{ member.joined_at|date:"M d, Y, h:i A" }}</p>
+
+          <button class="btn btn-sm btn-outline-info view-member"
+            data-user-id="{{ member.user.id }}"
+            data-user-name="{{ member.user.username }}"
+            data-bs-toggle="modal"
+            data-bs-target="#viewMemberModal"
+            title="View Member Details">
+            <i class="bi bi-eye"></i>
+          </button>
+
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  <div id="noMembersFound"class="text-center" style="display: none;">
+    <i class="bi bi-search"></i>
+    <p>No matching Members found</p>
+  </div>
+  </div>
+</div>
+
+
+
+<!-- View Member Modal -->
+<div
+  class="modal fade"
+  id="viewMemberModal"
+  tabindex="-1"
+  aria-labelledby="viewMemberModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="viewMemberModalLabel">Member Details</h5>
+     
+      </div>
+      <div class="modal-body">
+        <div class="row mb-3">
+          <div class="col-md-4 fw-bold">User:</div>
+          <div class="col-md-8" id="view_user"></div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-4 fw-bold">Project:</div>
+          <div class="col-md-8" id="view_project"></div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-4 fw-bold">Role:</div>
+        <div class="col-md-8" id="view_role"></div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-md-4 fw-bold">Joined At:</div>
+          <div class="col-md-8" id="view_joined_at"></div>
+        </div>
+        
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %} 
+
+{% block script %}
+
+<script src="{% static 'js/members.js' %}"></script>
+{% endblock script %}

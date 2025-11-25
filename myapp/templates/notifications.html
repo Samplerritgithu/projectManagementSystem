@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/notification.css' %}" />
+{% endblock style %}
+
+{% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+       <div class="card-header d-flex justify-content-between align-items-center">
+        <button type="button" class="btn btn-outline-secondary" id="closeBtn">
+            <i class="bi bi-arrow-left"></i> Close
+        </button>
+        
+        <div class="d-flex align-items-center">
+            {% if notifications|length > 0 %}
+                <label class="me-2 mb-0">
+                    <input type="checkbox" id="selectAll" /> Select All
+                </label>
+
+                <button type="button" class="btn btn-info ms-2" id="deleteSelectedBtn">
+                    <i class="bi bi-eraser"></i> Clear
+                </button>
+            {% endif %}
+        </div>
+</div>
+
+
+        <div class="card-body">
+          {% if notifications %}
+          <div class="list-group">
+            {% csrf_token %}
+            {% for notification in notifications %}
+            <div class="list-group-item list-group-item-action {% if not notification.read %}unread{% else %}read{% endif %}" data-link="{{ notification.link }}" data-notification-id="{{ notification.id }}">
+              <div class="d-flex justify-content-between flex-wrap align-items-start">
+                <div class="d-flex align-items-start gap-3">
+                  <input type="checkbox" class="notif-checkbox mt-1" value="{{ notification.id }}" />
+                  <div>
+                    <h5 class="mb-1">{{ notification.title }}</h5>
+                    <p class="mb-1">{{ notification.message }}</p>
+                    <small class="text-muted">{{ notification.notification_type }}</small>
+                  </div>
+                </div>
+
+                <div class="text-end">
+                  <small class="text-muted">{{ notification.created_at|date:"F j, Y, g:i a" }}</small>
+                </div>
+              </div>
+
+              <div class="d-flex justify-content-end align-items-center gap-2 mt-2 flex-wrap">
+                <button type="button" class="btn btn-sm btn-outline-secondary d-flex align-items-center view-details"
+                  data-bs-toggle="modal"
+                  data-bs-target="#taskModal"
+                  data-link="{{ notification.link }}"
+                  data-type="{{ notification.notification_type|lower }}">
+                  <i class="bi bi-eye me-1"></i> View Details
+                </button>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="alert alert-info">No notifications found.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Task Details Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1" aria-labelledby="taskModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="taskModalLabel">Task Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center" id="taskLoadingSpinner">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <div id="taskDetails"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block script %}
+<script>
+   const NOTIFICATION_DATA_URL = "{% url 'clear_selected_notifications' %}";
+</script>
+
+<script src="{% static 'js/notification.js' %}"></script>
+{% endblock script %}

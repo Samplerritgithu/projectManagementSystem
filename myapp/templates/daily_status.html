@@ -1,0 +1,184 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/daily_status.css' %}" />
+{% endblock style %}
+
+{% block content %}
+<div class="container pb-2 fade-in">
+
+  <!-- Page Header -->
+  <div class="d-flex align-items-center justify-content-center mb-4 page-header">
+        <h3 class="mb-0 flex-grow-1 text-center">Daily Status</h3>
+  </div>
+
+  <!-- Filter Card -->
+<div class="card shadow settings-card filter-card mb-4 position-relative">
+  <div class="card-body p-4">
+    <div class="row g-2 align-items-end">
+
+      <!-- Project -->
+      <div class="col-md-2">
+        <label class="form-label fw-semibold mb-2">Project</label>
+        <select class="form-select" id="filterProject">
+          <option value="" selected disabled>Select a Project</option>
+          {% if request.user.userprofile.role != "Developer" %}
+          <option value="all">All Projects</option>
+          {% endif %}
+        </select>
+        <div class="invalid-feedback" id="projectInvalidFeedback">Select a Project.</div>
+      </div>
+
+      {% if request.user.userprofile.role == "Manager" %}
+
+      <!-- Members -->
+      <div class="col-md-2">
+        <label class="form-label fw-semibold mb-2">Members</label>
+        <div class="dropdown w-100" id="memberDropdown">
+          <button class="form-select text-start d-flex align-items-center flex-wrap gap-1"
+                  id="memberDropdownBtn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <span class="text-muted" id="memberPlaceholder">Select member(s)</span>
+            <span id="memberChips" class="d-flex flex-wrap gap-1"></span>
+          </button>
+          <ul class="dropdown-menu p-2 w-100" id="memberDropdownMenu"
+              style="max-height: 240px; overflow: auto;"></ul>
+        </div>
+        <div class="invalid-feedback" id="memberInvalidFeedback">Select one or more members.</div>
+      </div>
+
+      <!-- Period -->
+      <div class="col-md-2">
+        <label class="form-label fw-semibold mb-2">Period</label>
+        <select class="form-select" id="periodSelect">
+          <option value="" selected disabled>Select Period</option>
+          <option value="all">All</option>
+          <option value="weekly">Weekly</option>
+          <option value="monthly">Monthly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+        <div class="invalid-feedback" id="periodInvalidFeedback">Select a period.</div>
+      </div>
+
+      <!-- Start Date -->
+      <div class="col-md-2">
+        <label class="form-label fw-semibold mb-2">Start Date</label>
+        <input type="date" class="form-control" id="staticStartDate" />
+        <div class="invalid-feedback" id="startDateInvalidFeedback">Select a start date.</div>
+      </div>
+
+      <!-- End Date -->
+      <div class="col-md-2">
+        <label class="form-label fw-semibold mb-2">End Date</label>
+        <input type="date" class="form-control" id="staticEndDate" />
+        <div class="invalid-feedback" id="endDateInvalidFeedback">Select an end date.</div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="col-md-2 filter-buttons-col">
+        <label class="form-label fw-semibold mb-2" style="visibility: hidden;">Actions</label>
+        <div class="d-flex gap-2 flex-nowrap">
+          <button class="btn btn-primary btn-sm flex-fill" id="staticFilterBtn" title="Filter">
+            <i class="bi bi-funnel-fill me-1"></i>
+          </button>
+          <button class="btn btn-success btn-sm flex-fill" id="staticDownloadBtn" title="Download">
+            <i class="bi bi-download"></i>
+          </button>
+          <button class="btn btn-secondary btn-sm flex-fill" id="staticResetBtn" title="Reset">
+            <i class="bi bi-arrow-counterclockwise"></i>
+          </button>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+
+  <!-- Edit Status Modal -->
+  <div class="modal fade" id="editDailyStatusModal" tabindex="-1" aria-labelledby="editDailyStatusModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content shadow-lg rounded-4">
+        <form id="editDailyStatusModalForm">
+          <div class="modal-header">
+            <h5 class="modal-title fw-semibold text-white" id="editDailyStatusModalLabel">
+              <i class="bi bi-pencil-square me-2"></i> Edit Daily Status
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body">
+            <input type="hidden" id="editStatusId" />
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-primary">
+                <i class="bi bi-folder2-open me-2 text-warning"></i> Project <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="editDailyStatusProject">
+                <option value="" selected disabled>📂 Select Project</option>
+                {% for project in projects %}
+                <option value="{{ project.id }}">{{ project.name }}</option>
+                {% endfor %}
+              </select>
+              <div class="invalid-feedback">Please select a project.</div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label fw-semibold text-primary">
+                <i class="bi bi-journal-text me-2 text-purple"></i> Status <span class="text-danger">*</span>
+              </label>
+              <textarea class="form-control" id="editDailyStatusText" rows="3"
+                placeholder="Describe your daily work status..."></textarea>
+              <div class="invalid-feedback">Please enter your daily status (min 10 characters).</div>
+              <div class="form-text">Minimum 10 characters required.</div>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+              <i class="bi bi-x-circle me-1"></i> Cancel
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <i class="bi bi-save me-1"></i> Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Table Section -->
+  <div class="card shadow settings-card table-card">
+    <div class="card-body">
+      <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 id="submittedStatusHeading" class="mb-0">
+          <i class="bi bi-list-check me-2"></i>Submitted Statuses
+        </h5>
+      </div>
+
+      <div class="table-wrapper">
+        <div class="table-responsive custom-scroll">
+          <table class="table table-hover mb-0" id="submittedStatusTable">
+            <thead>
+              <tr>
+                <th>Project</th>
+                <th>Member</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+  window.CURRENT_USER_ID = {{ request.user.id| default:0 }};
+  window.CURRENT_USER_ROLE = "{{ request.user.userprofile.role|default:'User' }}";
+</script>
+<script src="{% static 'js/daily_status.js' %}"></script>
+{% endblock script %}

@@ -1,0 +1,618 @@
+{% extends 'base.html' %} {% block extra_css %}
+<style>
+  .list-group-item.active {
+    background-color: #e9ecef !important;
+    border-color: #dee2e6;
+    color: #000;
+  }
+
+  .list-group-item.active:hover {
+    background-color: #d6e0f0 !important;
+    cursor: pointer;
+  }
+
+  .list-group-item.active:hover .btn {
+    background-color: transparent;
+  }
+
+  .list-group-item.active .btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: white;
+  }
+  .list-group-item h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .list-group-item .btn {
+    min-width: 110px;
+  }
+
+  .list-group-item .btn i {
+    font-size: 0.9rem;
+  }
+</style>
+{% endblock %} {% block content %}
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      <div class="card">
+        <div
+          class="card-header d-flex justify-content-between align-items-center"
+        >
+          <h4 class="mb-0">Notifications</h4>
+          <div>
+            <button type="button" class="btn btn-danger ms-2" id="deleteAllBtn">
+              <i class="bi bi-trash"></i> Delete All
+            </button>
+            <form
+              method="post"
+              action="{% url 'mark-all-notifications-read' %}"
+              style="display: inline"
+            >
+              {% csrf_token %}
+              <button type="submit" class="btn btn-secondary">
+                <i class="bi bi-check-all"></i> Mark All as Read
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <div class="card-body">
+          {% if notifications %}
+          <div class="list-group">
+            {% for notification in notifications %}
+            <div
+              class="list-group-item list-group-item-action {% if not notification.read %}active{% endif %}"
+            >
+              <!-- Top Row: Title, Date -->
+              <div class="d-flex justify-content-between flex-wrap">
+                <div>
+                  <h5 class="mb-1">{{ notification.title }}</h5>
+                  <p class="mb-1">{{ notification.message }}</p>
+                  <small class="text-muted"
+                    >{{ notification.notification_type }}</small
+                  >
+                </div>
+                <div class="text-end">
+                  <small class="text-muted"
+                    >{{ notification.created_at|date:"F j, Y, g:i a" }}</small
+                  >
+                </div>
+              </div>
+
+              <!-- Button Group -->
+              <div
+                class="d-flex justify-content-end align-items-center gap-2 mt-2 flex-wrap"
+              >
+                {% if not notification.read %}
+                <form
+                  method="post"
+                  action="{% url 'mark-notification-read' notification.id %}"
+                  class="m-0"
+                >
+                  {% csrf_token %}
+                  <button
+                    type="submit"
+                    class="btn btn-sm btn-outline-primary d-flex align-items-center"
+                  >
+                    <i class="bi bi-check2 me-1"></i> Mark as Read
+                  </button>
+                </form>
+                {% endif %}
+                <button
+                  type="button"
+                  class="btn btn-sm btn-outline-secondary d-flex align-items-center view-details"
+                  data-bs-toggle="modal"
+                  data-bs-target="#taskModal"
+                  data-task-id="{{ notification.link|cut:'/tasks/'|cut:'/view/'|default:'' }}"
+                >
+                  <i class="bi bi-eye me-1"></i> View Details
+                </button>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="alert alert-info">No notifications found.</div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Task Details Modal -->
+<div
+  class="modal fade"
+  id="taskModal"
+  tabindex="-1"
+  aria-labelledby="taskModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="taskModalLabel">Task Details</h5>
+        <button
+          type="button"
+          class="btn-close"
+          data-bs-dismiss="modal"
+          aria-label="Close"
+        ></button>
+      </div>
+      <div class="modal-body">
+        <div class="text-center" id="taskLoadingSpinner">
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading...</span>
+          </div>
+        </div>
+        <div id="taskDetails"></div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} {% block extra_js %}
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const csrftoken = document.querySelector(
+      "[name=csrfmiddlewaretoken]"
+    ).value;
+
+    // View Details Logic
+    document.querySelectorAll(".view-details").forEach((button) => {
+      button.addEventListener("click", function () {
+        const taskId = this.getAttribute("data-task-id");
+        currentTaskId = taskId; // Store the task ID for comment submission
+        const taskDetails = document.getElementById("taskDetails");
+        const loadingSpinner = document.getElementById("taskLoadingSpinner");
+
+        loadingSpinner.style.display = "block";
+        taskDetails.innerHTML = "";
+
+        fetch(`/tasks/${taskId}/view/`, {
+          method: "GET",
+          headers: {
+            "X-CSRFToken": csrftoken,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            loadingSpinner.style.display = "none";
+            const detailsHtml = `
+              <div class="card">
+                <div class="card-body">
+                  <h5 class="card-title">${data.title}</h5>
+                  <p class="card-text">${
+                    data.description || "No description provided"
+                  }</p>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <p><strong>Project:</strong> ${data.project_name}</p>
+                      <p><strong>Assigned To:</strong> ${
+                        data.assigned_to_name
+                      }</p>
+                      <p><strong>Status:</strong> <span class="badge bg-${getStatusColor(
+                        data.status
+                      )}">${data.status}</span></p>
+                    </div>
+                    <div class="col-md-6">
+                      <p><strong>Priority:</strong> <span class="badge bg-${getPriorityColor(
+                        data.priority
+                      )}">${data.priority}</span></p>
+                      <p><strong>Due Date:</strong> ${
+                        data.due_date || "Not set"
+                      }</p>
+                      <p><strong>Created:</strong> ${data.created_at}</p>
+                    </div>
+                  </div>
+                  ${
+                    data.subtasks?.length
+                      ? `
+                    <h6 class="mt-3">Subtasks:</h6>
+                    <ul class="list-group">
+                      ${data.subtasks
+                        .map(
+                          (subtask) => `
+                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                          ${subtask.title}
+                          
+                        </li>`
+                        )
+                        .join("")}
+                    </ul>`
+                      : ""
+                  }
+                  ${
+                    data.comments?.length
+                      ? `
+                    <h6 class="mt-3">Comments:</h6>
+                    <div class="list-group" id="commentsList">
+                      ${data.comments
+                        .map(
+                          (comment) => `
+                        <div class="list-group-item">
+                          <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">${comment.user__username}</h6>
+                            <small>${comment.created_at}</small>
+                          </div>
+                          <p class="mb-1">${comment.content}</p>
+                        </div>`
+                        )
+                        .join("")}
+                    </div>`
+                      : '<p class="mt-3 text-muted" id="noCommentsMsg">No comments yet</p>'
+                  }
+                  
+                  <!-- Comment Input Section -->
+            <div class="mt-3">
+  <h6>Add Comment:</h6>
+  <div class="d-flex align-items-start">
+    <textarea class="form-control me-2" id="commentInput" rows="3" placeholder="Enter your comment..." style="width: 90%;"></textarea>
+    <button class="btn btn-primary btn-sm" type="button" id="submitComment" style="width: 10%; white-space: nowrap;">
+      <i class="bi bi-send"></i> Submit
+    </button>
+  </div>
+</div>
+
+                </div>
+              </div>`;
+            taskDetails.innerHTML = detailsHtml;
+          })
+          .catch((error) => {
+            loadingSpinner.style.display = "none";
+            taskDetails.innerHTML = `
+              <div class="alert alert-danger">
+                <p>Error loading task details. Please try again later.</p>
+                <small class="d-block mt-2">Error: ${error.message}</small>
+              </div>`;
+            console.error("Error:", error);
+          });
+      });
+    });
+
+
+    // Delete All
+    document.getElementById("deleteAllBtn")?.addEventListener("click", () => {
+      if (!confirm("Delete all notifications?")) return;
+
+      fetch(`/notifications/delete-all/`, {
+        method: "POST",
+        headers: {
+          "X-CSRFToken": csrftoken,
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) {
+            document.querySelector(".list-group").innerHTML = "";
+          } else {
+            alert("Failed to delete all.");
+          }
+        });
+    });
+
+    // Comment submission functionality
+    let currentTaskId = null;
+
+    // Handle comment submission
+    document.addEventListener("click", function (e) {
+      if (e.target && e.target.id === "submitComment") {
+        const commentInput = document.getElementById("commentInput");
+        const commentText = commentInput.value.trim();
+
+        if (!commentText) {
+          alert("Please enter a comment.");
+          return;
+        }
+
+        if (!currentTaskId) {
+          alert("No task selected.");
+          return;
+        }
+
+        // Submit comment
+        fetch("/comments/add/", {
+          method: "POST",
+          headers: {
+            "X-CSRFToken": csrftoken,
+            "Content-Type": "application/json",
+            Accept: "application/json",
+          },
+          body: JSON.stringify({
+            content: commentText,
+            task_id: currentTaskId,
+          }),
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            if (data.success) {
+              // Clear the input
+              commentInput.value = "";
+
+              // Add the new comment to the comments section (not subtasks)
+              const commentsSection = document.getElementById("commentsList");
+              if (commentsSection) {
+                const newCommentHtml = `
+                  <div class="list-group-item">
+                    <div class="d-flex w-100 justify-content-between">
+                      <h6 class="mb-1">${data.comment.user}</h6>
+                      <small>${data.comment.created_at}</small>
+                    </div>
+                    <p class="mb-1">${data.comment.content}</p>
+                  </div>
+                `;
+                commentsSection.insertAdjacentHTML("beforeend", newCommentHtml);
+              } else {
+                // If no comments section exists, create one
+                const taskDetails = document.getElementById("taskDetails");
+                const commentsHtml = `
+                  <h6 class="mt-3">Comments:</h6>
+                  <div class="list-group" id="commentsList">
+                    <div class="list-group-item">
+                      <div class="d-flex w-100 justify-content-between">
+                        <h6 class="mb-1">${data.comment.user}</h6>
+                        <small>${data.comment.created_at}</small>
+                      </div>
+                      <p class="mb-1">${data.comment.content}</p>
+                    </div>
+                  </div>
+                `;
+                taskDetails.insertAdjacentHTML("beforeend", commentsHtml);
+              }
+
+              // Remove the "No comments yet" message if it exists
+              const noCommentsMsg = document.querySelector(
+                "#taskDetails #noCommentsMsg, #taskDetails p.text-muted"
+              );
+              if (
+                noCommentsMsg &&
+                /No comments yet/i.test(noCommentsMsg.textContent || "")
+              ) {
+                noCommentsMsg.remove();
+              }
+
+              alert("Comment added successfully!");
+            } else {
+              alert("Failed to add comment: " + data.error);
+            }
+          })
+          .catch((error) => {
+            console.error("Error:", error);
+            alert("Error adding comment. Please try again.");
+          });
+      }
+    });
+  });
+
+  function getStatusColor(status) {
+    const map = {
+      "To-do": "secondary",
+      "In Progress": "primary",
+      Review: "info",
+      Done: "success",
+    };
+    return map[status] || "secondary";
+  }
+
+  function getPriorityColor(priority) {
+    const map = {
+      Low: "success",
+      Medium: "warning",
+      High: "danger",
+      Urgent: "dark",
+    };
+    return map[priority] || "secondary";
+  }
+</script>
+<script>
+  // Additive: handle "View Details" for user registration notifications
+  document.addEventListener(
+    "click",
+    function (e) {
+      const button = e.target.closest(".view-details");
+      if (!button) return;
+
+      // Find notification id from sibling delete button
+      const container = button.closest(".list-group-item");
+      const deleteBtn = container
+        ? container.querySelector(".delete-notification")
+        : null;
+      const notificationId = deleteBtn
+        ? deleteBtn.getAttribute("data-id")
+        : null;
+      if (!notificationId) return;
+
+      // Fetch notifications to get the link for this notification
+      fetch("/notifications/", {
+        headers: {
+          Accept: "application/json",
+          "X-Requested-With": "XMLHttpRequest",
+        },
+      })
+        .then((res) => res.json())
+        .then((list) => {
+          const notif = Array.isArray(list)
+            ? list.find((n) => String(n.id) === String(notificationId))
+            : null;
+          if (!notif || !notif.link) {
+            // No link; let existing handler proceed
+            return;
+          }
+
+          const isUserLink = notif.link.indexOf("/users/") !== -1;
+          const isProjectLink = notif.link.indexOf("/projects/") !== -1;
+          if (!isUserLink && !isProjectLink) {
+            // Not a user/project notification; let existing task handler proceed
+            return;
+          }
+
+          // Override default handler for user/project
+          e.preventDefault();
+          if (typeof e.stopImmediatePropagation === "function")
+            e.stopImmediatePropagation();
+          e.stopPropagation();
+
+          // Ensure modal is visible
+          try {
+            const modalEl = document.getElementById("taskModal");
+            const bsModal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            bsModal.show();
+          } catch (err) {
+            // ignore if bootstrap not available, modal will open via data-api
+          }
+
+          const titleEl = document.getElementById("taskModalLabel");
+          if (titleEl)
+            titleEl.textContent = isProjectLink
+              ? "Project Details"
+              : "User Details";
+
+          const taskDetails = document.getElementById("taskDetails");
+          const loadingSpinner = document.getElementById("taskLoadingSpinner");
+          if (loadingSpinner) loadingSpinner.style.display = "block";
+          if (taskDetails) taskDetails.innerHTML = "";
+
+          fetch(notif.link, { headers: { Accept: "application/json" } })
+            .then((r) => r.json())
+            .then((data) => {
+              if (loadingSpinner) loadingSpinner.style.display = "none";
+
+              if (isUserLink) {
+                const html = `
+              <div class="card">
+                <div class="card-body">
+                  <div class="d-flex align-items-center mb-3">
+                    ${
+                      data.profile_picture_url
+                        ? `<img src="${data.profile_picture_url}" class="rounded-circle me-3" style="width:48px;height:48px;object-fit:cover;" />`
+                        : ""
+                    }
+                    <div>
+                      <h5 class="card-title mb-0">${data.username || "-"}</h5>
+                      <small class="text-muted">${
+                        data.role || "User"
+                      } • EmpID: ${data.empid || "-"}</small>
+                    </div>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <p><strong>Email:</strong> ${data.email || "-"}</p>
+                      <p><strong>Phone:</strong> ${data.phone || "-"}</p>
+                    </div>
+                    <div class="col-md-6">
+                      <p><strong>Team:</strong> ${data.team || "-"}</p>
+                      <p><strong>Joined:</strong> ${data.date_joined || "-"}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>`;
+                if (taskDetails) taskDetails.innerHTML = html;
+                return;
+              }
+
+              // Project details view
+              const tasksList =
+                Array.isArray(data.tasks) && data.tasks.length
+                  ? `
+              <h6 class="mt-3">Tasks:</h6>
+              <ul class="list-group">
+                ${data.tasks
+                  .map(
+                    (t) => `
+                  <li class="list-group-item d-flex justify-content-between align-items-center">
+                    <span>${t.title}</span>
+                    <span>
+                      <span class="badge bg-${getStatusColor(t.status)} me-2">${
+                      t.status
+                    }</span>
+                      <small class="text-muted">${
+                        t.assigned_to || "Unassigned"
+                      }</small>
+                    </span>
+                  </li>
+                `
+                  )
+                  .join("")}
+              </ul>
+            `
+                  : "";
+
+              const html = `
+            <div class="card">
+              <div class="card-body">
+                <h5 class="card-title">${data.name || "-"}</h5>
+                <p class="mb-2"><small class="text-muted">Project ID: ${
+                  data.project_id || "-"
+                }</small></p>
+                <p class="card-text">${
+                  data.description || "No description provided"
+                }</p>
+                <div class="row">
+                  <div class="col-md-6">
+                    <p><strong>Client:</strong> ${data.client_name || "-"}</p>
+                    <p><strong>Status:</strong> <span class="badge bg-${getStatusColor(
+                      data.status
+                    )}">${data.status || "-"}</span></p>
+                  </div>
+                  <div class="col-md-6">
+                    <p><strong>Start Date:</strong> ${
+                      data.start_date || "-"
+                    }</p>
+                    <p><strong>End Date:</strong> ${data.end_date || "-"}</p>
+                  </div>
+                </div>
+                <div class="mt-2">
+                  <p class="mb-1"><strong>Progress:</strong> ${
+                    data.progress ?? 0
+                  }%</p>
+                  <div class="progress" style="height: 8px;">
+                    <div class="progress-bar" role="progressbar" style="width: ${
+                      data.progress ?? 0
+                    }%;" aria-valuenow="${
+                data.progress ?? 0
+              }" aria-valuemin="0" aria-valuemax="100"></div>
+                  </div>
+                </div>
+                ${tasksList}
+              </div>
+            </div>`;
+              if (taskDetails) taskDetails.innerHTML = html;
+            })
+            .catch((err) => {
+              if (loadingSpinner) loadingSpinner.style.display = "none";
+              if (taskDetails)
+                taskDetails.innerHTML = `
+            <div class="alert alert-danger">
+              <p>Error loading ${
+                isProjectLink ? "project" : "user"
+              } details. Please try again later.</p>
+              <small class="d-block mt-2">Error: ${err.message}</small>
+            </div>`;
+            });
+        })
+        .catch(() => {
+          // swallow errors; fallback is existing task handler
+        });
+    },
+    true
+  );
+</script>
+<script>
+  // Ensure Task Details title is set when viewing task notifications (non-user)
+  document.addEventListener("click", function (e) {
+    const btn = e.target.closest(".view-details");
+    if (!btn) return;
+    const titleEl = document.getElementById("taskModalLabel");
+    if (titleEl) titleEl.textContent = "Task Details";
+  });
+</script>
+{% endblock %}

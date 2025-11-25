@@ -1,0 +1,674 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Teams{% endblock %}
+
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/teams.css' %}">
+<link rel="stylesheet" href="{% static 'css/modals.css' %}">
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+
+{% endblock style %}
+
+{% block content %}
+<div class="container-fluid pb-3">
+
+  <div class="d-flex align-items-center justify-content-between mb-3" style="min-height: 60px;">
+    <h3 class="flex-grow-1 text-center">Teams</h3>
+    <div class="d-flex gap-2">
+      {% if request.user.userprofile.role == "Manager" %}
+      <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addDocumentModal">
+        <i class="bi bi-file-earmark-plus"></i> Upload Document
+      </button>
+      {% endif %}
+      <button type="button" class="btn btn-primary" onclick="openCreateTeamModal()">
+        <i class="bi bi-plus-circle"></i> Create Team
+      </button>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <div class="card mb-3 p-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" id="filterSearch" placeholder="Search teams..." />
+        </div>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select" id="filterProject">
+          <option value="">All Projects</option>
+          {% for project in projects %}
+            <option value="{{ project.id }}">{{ project.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select" id="filterRole">
+          <option value="">All Roles</option>
+          {% for role in roles %}
+            <option value="{{ role.name }}">{{ role.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select" id="filterLead">
+          <option value="">All Team Leads</option>
+          {% for user in users %}
+            {% if user.userprofile.role == "Team Lead" %}
+              <option value="{{ user.id }}">{{ user.username }}</option>
+            {% endif %}
+          {% endfor %}
+        </select>
+      </div>
+      
+      <div class="col-md-2">
+        <button class="btn btn-outline-secondary w-100" id="resetTeamFilters">
+          <i class="bi bi-arrow-counterclockwise"></i> Reset
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Teams List -->
+  <div class="team-list-wrapper">
+    {% if teams %}
+      <div class="team-cards-scroll">
+        <div class="team-cards">
+          {% for team in teams %}
+            <div id="team-{{ team.id }}" class="team-card"
+                 data-project="{{ team.project.id }}"
+                 data-project-name="{{ team.project.name }}"
+                 data-role="{% if team.team_role %}{{ team.team_role.name }}{% else %}Designer{% endif %}"
+                 data-role-name="{% if team.team_role %}{{ team.team_role.name }}{% else %}Designer{% endif %}"
+                 data-lead="{{ team.team_lead.id }}"
+                 data-lead-name="{{ team.team_lead.username }}"
+                 data-members="{% for member in team.members.all %}{{ member.id }}{% if not forloop.last %},{% endif %}{% endfor %}"
+                 data-members-names="{% for member in team.members.all %}{{ member.username }} {{ member.userprofile.role }}{% if not forloop.last %} {% endif %}{% endfor %}">
+              <h4>{{ team.project.name }}</h4>
+              <p><span>Team Role:</span> <strong>{% if team.team_role %}{{ team.team_role.name }}{% else %}Designer{% endif %}</strong></p>
+              <p><span>Team Lead:</span> <strong>{{ team.team_lead.username }}</strong></p>
+              <p><span>Members:</span>
+                <strong class="members-ellipsis">
+                  {% for member in team.members.all %}
+                    {{ member.username }} ({{ member.userprofile.role }}){% if not forloop.last %}, {% endif %}
+                  {% endfor %}
+                </strong>
+              </p>
+              <div class="team-card-buttons">
+                <button class="btn btn-primary btn-sm"
+                  onclick="editTeam('{{ team.id }}', '{{ team.project.id }}', '{{ team.team_lead.id }}', '{% if team.team_role %}{{ team.team_role.name }}{% endif %}', '{% for member in team.members.all %}{{ member.id }}{% if not forloop.last %},{% endif %}{% endfor %}')"
+                  title="Edit Team">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <button class="btn btn-danger btn-sm" onclick="deleteTeam('{{ team.id }}')" title="Delete Team">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </div>
+          {% endfor %}
+          <!-- No matching teams message (hidden by default) -->
+          <div id="no-matching-teams-message" class="text-center" style="display: none;">
+            <i class="bi bi-search"></i>
+            <p>No matching teams found</p>
+          </div>
+        </div>
+      </div>
+    {% else %}
+      <p id="no-teams-message" class="text-center">No teams available yet.</p>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Create/Edit Team Modal -->
+<div class="modal fade" id="teamModal" tabindex="-1" aria-labelledby="teamModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content shadow-lg rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title text-white fw-bold" id="form-title">
+          <i class="bi bi-people-fill me-2"></i> Create Team
+        </h5>
+      </div>
+      <div class="modal-body">
+        <form method="post" id="team-form" novalidate>
+          {% csrf_token %}
+          <input type="hidden" id="team_id" name="team_id" />
+
+          <!-- Project & Team Lead Row -->
+          <div class="row mb-3 border-bottom pb-3">
+            <div class="col-md-6 mb-3">
+              <label for="project_id" class="form-label">
+                <i class="bi bi-folder2-open me-2"></i> Project Name <span class="text-danger">*</span>
+              </label>
+              <select id="project_id" name="project_id" class="form-select" required>
+                <option value="" disabled selected>📦 Select Project</option>
+                {% for project in projects %}
+                  <option value="{{ project.id }}">🎯 {{ project.name }}</option>
+                {% endfor %}
+              </select>
+              <div class="invalid-feedback">Project is required.</div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="team_lead" class="form-label">
+                <i class="bi bi-person-badge me-2"></i> Team Lead <span class="text-danger">*</span>
+              </label>
+              <select id="team_lead" name="team_lead" class="form-select" required>
+                <option value="" disabled selected>👑 Select Team Lead</option>
+                {% for user in users %}
+                  {% if user.userprofile.role == "Team Lead" %}
+                    <option value="{{ user.id }}">⭐ {{ user.username }}</option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+              <div class="invalid-feedback">Team Lead is required.</div>
+            </div>
+          </div>
+
+          <!-- Team Role -->
+          <div class="mb-3 border-bottom pb-3">
+            <label for="team_role" class="form-label">
+              <i class="bi bi-tags me-2"></i> Team Role
+            </label>
+            <div class="d-flex gap-2">
+              <select id="team_role" name="team_role" class="form-select flex-grow-1">
+                <option value="" disabled selected>🏷️ Select Role</option>
+                {% for role in roles %}
+                  <option value="{{ role.name }}">🎭 {{ role.name }}</option>
+                {% endfor %}
+              </select>
+              <input id="new-role-input" type="text" class="form-control" style="max-width: 200px;" placeholder="Add new role">
+              <button id="add-role-btn" type="button" class="btn btn-outline-primary" style="min-width: 45px;">
+                <i class="bi bi-plus-lg"></i>
+              </button>
+            </div>
+            <div class="invalid-feedback"></div>
+          </div>
+
+          <!-- Team Members - Compact Design -->
+          <div class="mb-3 position-relative">
+            <label class="form-label">
+              <i class="bi bi-people me-2"></i> Team Members <span class="text-danger">*</span>
+            </label>
+            <input type="text" id="members-search" readonly
+                   class="form-control"
+                   placeholder="Click to select team members...">
+            <div class="dropdown-menu w-100 p-2" id="members-dropdown-content">
+              <input type="text" id="members-search-input" class="form-control mb-2" placeholder="Search members...">
+              <div class="members-list" id="members-list">
+                {% for user in users %}
+                  <div class="form-check member-option">
+                    <input type="checkbox" class="form-check-input"
+                           name="members"
+                           value="{{ user.id }}"
+                           data-user-role="{{ user.userprofile.role }}"
+                           id="checkbox-{{ user.id }}">
+                    <label class="form-check-label" for="checkbox-{{ user.id }}">
+                      {{ user.username }} <small class="text-muted">({{ user.userprofile.role }})</small>
+                    </label>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+            <div id="members-feedback" class="invalid-feedback" style="display: none;"></div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i> Cancel
+        </button>
+        <button type="submit" class="btn btn-primary" id="submit-button" form="team-form">
+          <i class="bi bi-check-circle me-1"></i> Create Team
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Document Modal -->
+<div class="modal fade" id="addDocumentModal" tabindex="-1" aria-labelledby="addDocumentModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title text-primary fw-semibold" id="addDocumentModalLabel">
+          <i class="bi bi-file-earmark-plus me-2" style="color: #fd7e14;"></i> Upload Document
+        </h5>
+      </div>
+      <form method="post" action="{% url 'documents' %}" enctype="multipart/form-data" id="addDocumentForm" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="action" value="add" />
+        <div class="modal-body">
+          <!-- Title -->
+          <div class="mb-3">
+            <label for="title" class="form-label text-primary fw-semibold">
+              <i class="bi bi-card-text me-2" style="color: #89AD4FFF;"></i> Title <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control" id="title" name="title" maxlength="50" />
+            <div class="invalid-feedback"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="project" class="form-label text-primary fw-semibold">
+              <i class="bi bi-folder2-open me-2" style="color: #24AB6CFF;"></i> Project <span class="text-danger">*</span>
+            </label>
+            <select class="form-select" id="project" name="project">
+              <option value="" disabled selected>📦 Select Project</option>
+              {% for project in projects %}
+              <option value="{{ project.id }}">🎯{{ project.name }}</option>
+              {% endfor %}
+            </select>
+            <div class="invalid-feedback"></div>
+          </div>
+
+          <div class="mb-3">
+            <label for="file" class="form-label text-primary fw-semibold">
+              <i class="bi bi-file-earmark-arrow-up me-2" style="color: #BF50A5FF;"></i> File <span class="text-danger">*</span>
+            </label>
+            <input type="file" class="form-control" id="file" name="file" />
+            <div class="invalid-feedback"></div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i> Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-upload me-1"></i> Upload
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block script %}
+<script src="{% static 'js/teams.js' %}"></script>
+<script>
+// Document upload functionality for teams page
+document.addEventListener("DOMContentLoaded", function() {
+  const addDocumentForm = document.getElementById("addDocumentForm");
+  const addFileInput = document.getElementById("file");
+  const addDocumentModal = document.getElementById("addDocumentModal");
+  const titleInput = document.getElementById("title");
+  const projectSelect = document.getElementById("project");
+
+  if (!addDocumentForm) return;
+
+  // Validation Functions
+  function validateTitle(field) {
+    const feedback = field.parentNode.querySelector(".invalid-feedback");
+    const value = field.value.trim();
+
+    if (!value) {
+      field.classList.add("is-invalid");
+      field.classList.remove("is-valid");
+      feedback.textContent = "Title is required.";
+      return false;
+    }
+
+    if (!/^[A-Za-z0-9 ]+$/.test(value)) {
+      field.classList.add("is-invalid");
+      field.classList.remove("is-valid");
+      feedback.textContent = "Only letters, numbers and spaces are allowed.";
+      return false;
+    }
+
+    if (value.length > 50) {
+      field.classList.add("is-invalid");
+      field.classList.remove("is-valid");
+      feedback.textContent = "Maximum 50 characters allowed.";
+      return false;
+    }
+
+    field.classList.remove("is-invalid");
+    field.classList.add("is-valid");
+    feedback.textContent = "";
+    return true;
+  }
+
+  function validateField(field, message) {
+    const feedback = field.parentNode.querySelector(".invalid-feedback");
+
+    if (!field.value.trim()) {
+      field.classList.add("is-invalid");
+      field.classList.remove("is-valid");
+      feedback.textContent = message;
+      return false;
+    }
+
+    field.classList.remove("is-invalid");
+    field.classList.add("is-valid");
+    feedback.textContent = "";
+    return true;
+  }
+
+  function validateFileInput(input) {
+    const feedback = input.parentNode.querySelector(".invalid-feedback");
+    const file = input.files[0];
+
+    // No file selected
+    if (!file) {
+        input.classList.add("is-invalid");
+        input.classList.remove("is-valid");
+        feedback.textContent = "Select a PDF file.";
+        return false;
+    }
+
+    // File is not PDF
+    if (file.type !== "application/pdf") {
+        input.classList.add("is-invalid");
+        input.classList.remove("is-valid");
+        feedback.textContent = "";
+        if (typeof toastr !== 'undefined') {
+          toastr.error("Only PDF files are allowed!", "Error", {
+              closeButton: true,
+              progressBar: true,
+              timeOut: 5000,
+              extendedTimeOut: 1000,
+              positionClass: "toast-top-right"
+          });
+        }
+        input.value = "";
+        return false;
+    }
+
+    // Valid PDF
+    input.classList.remove("is-invalid");
+    input.classList.add("is-valid");
+    feedback.textContent = "";
+    return true;
+  }
+
+  // Live duplicate check function
+  let duplicateCheckTimeout;
+  let isDuplicateFlag = false;
+  
+  function checkDocDuplicateAdd() {
+    try {
+      const newTitle = (titleInput?.value || '').trim().toLowerCase();
+      const projId = projectSelect?.value || '';
+      const btn = addDocumentForm?.querySelector('button[type="submit"]');
+  
+      // If no title, reset error and stop
+      if (!newTitle) {
+        clearDuplicateError();
+        return false;
+      }
+  
+      // Clear previous timeout
+      if (duplicateCheckTimeout) clearTimeout(duplicateCheckTimeout);
+  
+      duplicateCheckTimeout = setTimeout(() => {
+        const cards = Array.from(document.querySelectorAll('.document-card'));
+  
+        // If project not selected, check duplicates across all projects
+        const dupInDOM = cards.some(card => {
+          const cardTitle = (card.querySelector('.card-title')?.textContent || '').trim().toLowerCase();
+          return cardTitle === newTitle;
+        });
+  
+        if (dupInDOM) {
+          showDuplicateError();
+          return;
+        }
+  
+        // If not found in DOM, check via API
+        fetch(`/documents/`, {
+          method: 'GET',
+          headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Accept': 'text/html'
+          }
+        })
+        .then(response => response.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const doc = parser.parseFromString(html, 'text/html');
+          const cards = Array.from(doc.querySelectorAll('.document-card'));
+  
+          // Check across all projects if no project selected
+          const dup = cards.some(card => {
+            const cardTitle = (card.querySelector('.card-title')?.textContent || '').trim().toLowerCase();
+            return cardTitle === newTitle;
+          });
+  
+          if (dup) {
+            isDuplicateFlag = true;
+            showDuplicateError();
+          } else {
+            isDuplicateFlag = false;
+            clearDuplicateError();
+            btn && (btn.disabled = false);
+          }
+        })
+        .catch(() => {
+          isDuplicateFlag = false;
+          clearDuplicateError();
+          btn && (btn.disabled = false);
+        });
+      }, 300);
+  
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+  
+
+  function showDuplicateError() {
+    const btn = addDocumentForm?.querySelector('button[type="submit"]');
+    if (!titleInput) return;
+    
+    titleInput.classList.add('is-invalid');
+    titleInput.classList.remove('is-valid');
+    titleInput.setCustomValidity('Duplicate document title');
+    
+    const fb = titleInput.parentNode.querySelector('.invalid-feedback');
+    if (fb) { 
+      fb.textContent = 'A document with this title already exists.'; 
+      fb.style.display = 'block'; 
+    }
+    
+    if (btn) {
+      btn.disabled = true;
+      btn.setAttribute('data-duplicate-blocked', 'true');
+    }
+    
+    isDuplicateFlag = true;
+  }
+
+  function clearDuplicateError() {
+    isDuplicateFlag = false;
+    if (!titleInput) return;
+    
+    const fb = titleInput.parentNode.querySelector('.invalid-feedback');
+    if (fb && fb.textContent.includes('already exists')) { 
+      fb.textContent = ''; 
+      fb.style.display = ''; 
+    }
+    titleInput.setCustomValidity('');
+    
+    const btn = addDocumentForm?.querySelector('button[type="submit"]');
+    if (btn) {
+      btn.disabled = false;
+      btn.removeAttribute('data-duplicate-blocked');
+    }
+  }
+
+  // Synchronous duplicate check for submit
+  function checkDuplicateSync() {
+    const newTitle = (titleInput?.value || '').trim().toLowerCase();
+    const projId = projectSelect?.value || '';
+    if (!newTitle || !projId) return false;
+    
+    // Check DOM first
+    const cards = Array.from(document.querySelectorAll('.document-card'));
+    const dupInDOM = cards.some(card => 
+      (card.getAttribute('data-project') === projId) && 
+      ((card.querySelector('.card-title')?.textContent || '').trim().toLowerCase() === newTitle)
+    );
+    
+    if (dupInDOM) {
+      isDuplicateFlag = true;
+      showDuplicateError();
+      return true;
+    }
+    
+    // If no DOM check, we'll rely on server-side validation
+    // but show error if flag was set by async check
+    if (isDuplicateFlag) {
+      showDuplicateError();
+      return true;
+    }
+    
+    return false;
+  }
+
+  // Submit Validation
+  addDocumentForm.addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const submitBtn = addDocumentForm?.querySelector('button[type="submit"]');
+    
+    // Prevent submission if button is disabled due to duplicate
+    if (submitBtn && (submitBtn.disabled || submitBtn.getAttribute('data-duplicate-blocked') === 'true')) {
+      if (isDuplicateFlag) {
+        showDuplicateError();
+        if (typeof toastr !== 'undefined') {
+          toastr.error('A document with this title already exists for the selected project.', 'Duplicate Title', {
+            timeOut: 5000,
+            closeButton: true,
+            progressBar: true
+          });
+        }
+      }
+      return;
+    }
+
+    let valid = true;
+    if (!validateTitle(titleInput)) valid = false;
+    if (!validateField(projectSelect, "Project is required.")) valid = false;
+    if (!validateFileInput(addFileInput)) valid = false;
+
+    if (!valid) return;
+
+    // Perform synchronous duplicate check before submission
+    const newTitle = (titleInput?.value || '').trim().toLowerCase();
+    const projId = projectSelect?.value || '';
+    
+    if (newTitle && projId) {
+      // Check DOM first
+      const cards = Array.from(document.querySelectorAll('.document-card'));
+      const dupInDOM = cards.some(card => 
+        (card.getAttribute('data-project') === projId) && 
+        ((card.querySelector('.card-title')?.textContent || '').trim().toLowerCase() === newTitle)
+      );
+
+      if (dupInDOM) {
+        showDuplicateError();
+        return;
+      }
+
+      // If not found in DOM, make API call to check
+      try {
+        const response = await fetch(`/documents/`, {
+          method: 'GET',
+          headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+            'Accept': 'text/html'
+          }
+        });
+        const html = await response.text();
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        const cards = Array.from(doc.querySelectorAll('.document-card'));
+        const dup = cards.some(card => 
+          (card.getAttribute('data-project') === projId) && 
+          ((card.querySelector('.card-title')?.textContent || '').trim().toLowerCase() === newTitle)
+        );
+        
+        if (dup) {
+          showDuplicateError();
+          if (typeof toastr !== 'undefined') {
+            toastr.error('A document with this title already exists for the selected project.', 'Duplicate Title', {
+              timeOut: 5000,
+              closeButton: true,
+              progressBar: true
+            });
+          }
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking duplicate:', error);
+        // If check fails, allow submission (server will validate)
+      }
+    }
+
+    if (typeof toastr !== 'undefined') {
+      toastr.success("Document uploaded successfully!", "", {
+        timeOut: 5000,
+        closeButton: true,
+        progressBar: true
+      });
+    }
+
+    addDocumentForm.submit();
+  });
+
+  // Inline Validation (Real-time)
+  if (titleInput) {
+    titleInput.addEventListener("input", function () {
+      validateTitle(this);
+      checkDocDuplicateAdd();
+    });
+  }
+
+  if (projectSelect) {
+    projectSelect.addEventListener("change", function () {
+      validateField(this, "Project is required.");
+      checkDocDuplicateAdd();
+    });
+  }
+
+  if (addFileInput) {
+    addFileInput.addEventListener("change", function () {
+      validateFileInput(this);
+    });
+  }
+
+  // Reset Validation on Modal Close
+  if (addDocumentModal) {
+    addDocumentModal.addEventListener("hidden.bs.modal", function () {
+      addDocumentForm.reset();
+
+      addDocumentForm.querySelectorAll(".form-control, .form-select").forEach(el => {
+        el.classList.remove("is-invalid", "is-valid");
+      });
+
+      addDocumentForm.querySelectorAll(".invalid-feedback").forEach(fb => {
+        fb.textContent = "";
+      });
+
+      // Reset duplicate flag and button state
+      isDuplicateFlag = false;
+      const submitBtn = addDocumentForm?.querySelector('button[type="submit"]');
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.removeAttribute('data-duplicate-blocked');
+      }
+      
+      // Clear any pending timeout
+      if (duplicateCheckTimeout) {
+        clearTimeout(duplicateCheckTimeout);
+        duplicateCheckTimeout = null;
+      }
+    });
+  }
+});
+</script>
+{% endblock %}

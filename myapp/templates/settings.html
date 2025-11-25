@@ -1,0 +1,167 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/settings.css' %}" />
+{% endblock style %}
+
+{% block content %}
+<div class="container-fluid py-2  settings-page">
+
+  <div class="text-center mb-4">
+        <h3 class="mb-0 flex-grow-1 text-center">Settings</h3>
+  </div>
+
+  <div class="card shadow settings-card">
+    <!-- Tabs -->
+    <ul class="nav nav-tabs nav-justified" id="settingsTabs" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="account-tab" data-bs-toggle="tab"
+                data-bs-target="#account" type="button" role="tab">
+          <i class="bi bi-person-circle me-2"></i>Account
+        </button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="appearance-tab" data-bs-toggle="tab"
+                data-bs-target="#appearance" type="button" role="tab">
+          <i class="bi bi-palette me-2"></i>Appearance
+        </button>
+      </li>
+    </ul>
+
+    <!-- Content -->
+    <div class="tab-content p-4" id="settingsContent">
+      <!-- Account Tab -->
+      <div class="tab-pane fade show active" id="account" role="tabpanel">
+        <form method="post" enctype="multipart/form-data" class="settings-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="account">
+          <div id="accountAlert" class="alert alert-info d-none" role="alert"></div>
+
+          <div class="row g-4">
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Username</label>
+              <input type="text" class="form-control" name="username" value="{{ user.username }}" required>
+              <div class="text-danger small d-none" data-error-for="username"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Employee ID</label>
+              <input type="text" class="form-control" name="empid" value="{{ profile.empid }}" disabled>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Email</label>
+              <input type="email" class="form-control" name="email" value="{{ profile.email }}" required>
+              <div class="text-danger small d-none" data-error-for="email"></div>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Phone</label>
+              <input type="tel" class="form-control" name="phone" value="{{ profile.phone|default:'' }}">
+              <div class="text-danger small d-none" data-error-for="phone"></div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Role</label>
+              <select class="form-select" name="role" {% if profile.role != "Manager" %}disabled{% endif %}>
+                <option value="Manager" {% if profile.role == 'Manager' %}selected{% endif %}>Manager</option>
+                <option value="Team Lead" {% if profile.role == 'Team Lead' %}selected{% endif %}>Team Lead</option>
+                <option value="Employee" {% if profile.role == 'Employee' %}selected{% endif %}>Employee</option>
+                <option value="Developer" {% if profile.role == 'Developer' %}selected{% endif %}>Developer</option>
+                <option value="Designer" {% if profile.role == 'Designer' %}selected{% endif %}>Designer</option>
+              </select>
+              <div class="text-danger small d-none" data-error-for="role"></div>
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Team</label>
+              <select class="form-select" name="team">
+                {% for t in user_dropdown_options %}
+                <option value="{{ t.id }}" {% if profile.team_id == t.id %}selected{% endif %}>{{ t.label }}</option>
+                {% endfor %}
+              </select>
+              <div class="text-danger small d-none" data-error-for="team"></div>
+
+              {% if user_role_memberships %}
+              <div class="mt-2 small text-muted">
+                Roles in projects:
+                {% for r in user_role_memberships %}
+                <span class="badge rounded-pill bg-secondary">{{ r.label }}</span>
+                {% endfor %}
+              </div>
+              {% endif %}
+            </div>
+
+            <div class="col-md-6">
+              <label class="form-label fw-semibold">Profile Picture</label>
+              {% if profile.profile_picture %}
+              <div class="mb-2">
+                <img src="{{ profile.profile_picture.url }}" alt="Profile Picture"
+                     class="img-thumbnail profile-preview">
+              </div>
+              {% endif %}
+              <input type="file" class="form-control" name="profile_picture" accept="image/*">
+            </div>
+          </div>
+
+          <div class="mt-4 text-end">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-save me-1"></i> Save Changes
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Appearance Tab -->
+      <div class="tab-pane fade" id="appearance" role="tabpanel">
+        <form method="post" class="settings-form">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="appearance">
+          <div id="appearanceAlert" class="alert alert-info d-none" role="alert"></div>
+
+          <div class="row g-4">
+            <div class="col-md-4">
+             <label class="form-label fw-semibold">Theme</label>
+             <select class="form-select" name="theme" id="themeSelect" onchange="handleThemeChange(this.value)">
+                <option value="" selected disabled>Select Theme</option>
+                <option value="light" {% if profile.theme == 'light' %}selected{% endif %}>Light</option>
+                <option value="dark" {% if profile.theme == 'dark' %}selected{% endif %}>Dark</option>
+              </select>
+
+
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Primary Color</label>
+              <input type="color" class="form-control form-control-color" name="primary_color"
+                     value="{{ profile.primary_color|default:'#1e88e5' }}" onchange="handleColorChange(this.value)">
+            </div>
+
+            <div class="col-md-4">
+              <label class="form-label fw-semibold">Font Size</label>
+              <select class="form-select" name="font_size">
+                <option value="small" {% if profile.font_size == 'small' %}selected{% endif %}>Small</option>
+                <option value="medium" {% if profile.font_size == 'medium' %}selected{% endif %}>Medium</option>
+                <option value="large" {% if profile.font_size == 'large' %}selected{% endif %}>Large</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="mt-4 text-end">
+            <button type="submit" class="btn btn-primary px-4">
+              <i class="bi bi-save me-1"></i> Save Appearance
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block script %}
+<script>
+  const IS_SUPERUSER = {{ user.is_superuser|yesno:"true,false" }};
+</script>
+<script src="{% static 'js/settings.js' %}"></script>
+{% endblock script %}
+

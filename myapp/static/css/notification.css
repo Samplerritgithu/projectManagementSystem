@@ -1,0 +1,55 @@
+  .list-group-item.active {
+    background-color: #e9ecef !important;
+    border-color: #dee2e6;
+    color: #000;
+  }
+
+  .list-group-item.active:hover {
+    background-color: #d6e0f0 !important;
+    cursor: pointer;
+  }
+
+  /* Unread notification styling - blue background */
+  .list-group-item.unread {
+    background-color: #e3f2fd !important;
+    border-color: #90caf9;
+    color: #000;
+  }
+
+  .list-group-item.unread:hover {
+    background-color: #bbdefb !important;
+    cursor: pointer;
+  }
+
+  /* Read notification styling - green background */
+  .list-group-item.read {
+    background-color: #e8f5e8 !important;
+    border-color: #a5d6a7;
+    color: #000;
+  }
+
+  .list-group-item.read:hover {
+    background-color: #c8e6c9 !important;
+    cursor: pointer;
+  }
+
+  .list-group-item.active:hover .btn {
+    background-color: transparent;
+  }
+
+  .list-group-item.active .btn-outline-primary:hover {
+    background-color: #0d6efd;
+    color: white;
+  }
+  .list-group-item h5 {
+    font-size: 1.1rem;
+    font-weight: 600;
+  }
+
+  .list-group-item .btn {
+    min-width: 110px;
+  }
+
+  .list-group-item .btn i {
+    font-size: 0.9rem;
+  }

@@ -1,0 +1,1100 @@
+<!-- tasks.html -->
+{% extends 'base.html' %}
+
+{% load static %}
+
+<!-- Add CSRF token meta tag -->
+<meta name="csrf-token" content="{{ csrf_token }}" />
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/tasks.css' %}" />
+<link rel="stylesheet" href="{% static 'css/modals.css' %}" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{% endblock style %}
+
+{% block content %}
+<div class="container-fluid pb-3" >
+<div class="d-flex align-items-center justify-content-between " style="min-height: 60px;">
+  <h3 class="mb-0 flex-grow-1 text-center">Tasks</h3>
+  
+  <div class="d-flex gap-2">
+    <!-- Overdue Alert Button (visible to all roles) -->
+    <button type="button" class="btn btn-outline-danger position-relative" id="overdueAlertBtn" data-bs-toggle="tooltip" title="Overdue tasks">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" id="overdueCountBadge">0</span>
+    </button>
+
+{% if request.user.userprofile.role == "Developer" or request.user.userprofile.role == "Tester" or request.userprofile.role == "Designer" %}
+        {% if tasks.exists %}
+          <!-- Enabled when tasks exist -->
+          <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#dailyStatusModal">
+            <i class="bi bi-plus-circle"></i> Add Status
+          </button>
+        {% else %}
+          <!-- Disabled when no tasks -->
+          <button class="btn btn-primary" disabled>
+            <i class="bi bi-plus-circle"></i> Add Status
+          </button>
+          {% endif %}
+{% endif %}
+
+    
+    {% if request.user.userprofile.role == "Manager" %}
+    <button
+      class="btn btn-primary"
+      data-bs-toggle="modal"
+      data-bs-target="#addTaskModal"
+      id="addtask1"
+    >
+      <i class="bi bi-plus-circle"></i> Add Task
+    </button>
+    {% endif %}
+  </div>
+</div>
+
+
+  <!-- Filters and Search -->
+  <div class="filters-section">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input
+            type="text"
+            class="form-control"
+            id="taskSearch"
+            placeholder="Search tasks..."
+          />
+        </div>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select" id="projectFilter">
+          <option value="">All Projects</option>
+          {% for project in projects %}
+          <option value="{{ project.id }}">{{ project.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select" id="statusFilter">
+          <option value="" selected>📋 All Status</option>
+          <option value="To-do">📝 To-do</option>
+          <option value="In Progress">⚡ In Progress</option>
+          <option value="Review">🔍 Review</option>
+          <option value="Done">✅ Done</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select" id="priorityFilter">
+          <option value="">All Priorities</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <select class="form-select" id="assigneeFilter">
+          <option value="">All Assignees</option>
+          {% for user in users %}
+          <option value="{{ user.id }}">{{ user.username }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="col-md-1">
+        <button class="btn btn-outline-secondary w-100" id="resetFilters">
+          <i class="bi bi-arrow-counterclockwise"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Task View Options -->
+  <div class="view-options d-flex justify-content-between align-items-center">
+    <div class="btn-group" role="group">
+      <button
+        type="button"
+        class="btn btn-outline-primary active"
+        id="listViewBtn"
+      >
+        <i class="bi bi-list-ul"></i> List
+      </button>
+      <button type="button" class="btn btn-outline-primary" id="kanbanViewBtn">
+        <i class="bi bi-kanban"></i> Kanban
+      </button>
+      <button
+        type="button"
+        class="btn btn-outline-primary"
+        id="calendarViewBtn"
+      >
+        <i class="bi bi-calendar3"></i> Calendar
+      </button>
+      <button
+        type="button"
+          class="btn btn-outline-primary"
+        id="taskDistributionBtn"
+      >
+        <i class="bi bi-pie-chart"></i> Task Distribution
+      </button>
+    </div>
+    <div class="d-flex align-items-center">
+      <label class="me-2">Sort by:</label>
+      <select class="form-select form-select-sm" id="sortTasks">
+        <option value="due_date">Due Date</option>
+        <option value="priority">Priority</option>
+        <option value="start_date">Start Date</option>
+        <option value="title">Title</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- List View -->
+  <div id="listView">
+    <div class="card">
+      <div class="task-list-container">
+     <div class="table-scroll-wrapper">
+        <table class="table table-hover mb-0">
+          <thead>
+            <tr>
+              <th>Task</th>
+              <th>Project</th>
+              <th>Page Name</th>
+              <th>Assignee</th>
+              <th>Start Date</th>
+              <th>Due Date</th>
+              <th>Status</th>
+              <th>Priority</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="taskList">
+            {% for task in tasks %}
+            <tr data-task-id="{{ task.id }}">
+              <td style="max-width: 300px">
+                <div class="d-flex align-items-center">
+                  <div class="text-truncate">
+                    <h6 class="mb-0 text-truncate">{{ task.title }}</h6>
+                    Created: {{ task.created_at|date:"M d, Y" }}
+                  </div>
+                </div>
+              </td>
+              <td>{{ task.project.name }}</td>
+              <td>
+                {% if task.page_name %}
+                  <span class="badge bg-info">{{ task.page_name }}</span>
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if task.assigned_to %}
+                <div>
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="fs-6">👤</span>
+                    <span class="assignee-name">{{ task.assigned_to.username }}</span>
+                  </div>
+                  {% if task.assignee_role %}
+                  <div class="assignee-role">{{ task.assignee_role }}</div>
+                  {% endif %}
+                </div>
+                {% else %}
+                <div>
+                  <div class="d-flex align-items-center gap-2 text-muted">
+                    <span class="fs-6">👤</span>
+                    <span class="assignee-name">Unassigned</span>
+                  </div>
+                </div>
+                {% endif %}
+              </td>
+              <td>
+                {% if task.start_date %}
+                <span class="badge bg-info"
+                  >{{ task.start_date|date:"M d, Y" }}</span
+                >
+                {% else %}
+                <span class="badge bg-secondary">Not set</span>
+                {% endif %}
+              </td>
+              <td>
+                <span
+                  class="badge {% if task.due_date < today %}bg-danger{% else %}bg-success{% endif %}"
+                >
+                  {{ task.due_date|date:"M d, Y" }}
+                </span>
+              </td>
+              <td>
+                <span
+                  class="badge {% if task.status == 'Done' %}bg-success{% elif task.status == 'In Progress' %}bg-warning text-dark{% elif task.status == 'Review' %}bg-info{% else %}bg-secondary{% endif %}"
+                >
+                  {{ task.status }}
+                </span>
+              </td>
+              <td>
+                <span
+                  class="badge {% if task.priority == 'High' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning text-dark{% elif task.priority == 'Low' %}bg-primary{% else %}bg-danger{% endif %}"
+                >
+                  {{ task.priority }}
+                </span>
+              </td>
+              <td>
+               <div class="d-flex justify-content-center align-items-center" style="height: 100%;">
+  <button type="button" 
+          class="btn btn-sm btn-outline-secondary comment-task" 
+          data-task-id="{{ task.id }}" 
+          {% if task.assigned_to %}
+            data-assignee-id="{{ task.assigned_to.id }}"
+          {% else %}
+            data-assignee-id=""
+          {% endif %}
+          data-bs-toggle="tooltip" 
+          title="Comment">
+    <i class="bi bi-chat-dots"></i>
+  </button>
+</div>
+
+              </td>
+            </tr>
+            {% endfor %}
+            <tr id="noTasksRow" style="display: {% if tasks.exists %}none{% else %}table-row{% endif %};">
+              <td colspan="9" class="text-center">
+                {% if tasks.exists %}
+                  <!-- Hidden, will be handled by JS -->
+                {% else %}
+                  No tasks are yet added.
+                {% endif %}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Kanban View (Hidden by default) -->
+  <div id="kanbanView" style="display: none">
+    <div class="row g-3">
+      <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header bg-secondary text-white py-2">
+            <h5 class="mb-0 d-flex justify-content-between align-items-center">
+              <span>To-do</span>
+              <span class="badge bg-light text-dark" id="kanban-count-To-do">0</span>
+            </h5>
+          </div>
+          <div
+            class="card-body kanban-column p-2"
+            data-status="To-do"
+            ondrop="drop(event)"
+            ondragover="allowDrop(event)"
+          >
+            {% for task in tasks %} {% if task.status == 'To-do' %}
+            <div
+              class="card task-card mb-2"
+              draggable="true"
+              ondragstart="drag(event)"
+              ondragend="dragEnd(event)"
+              data-task-id="{{ task.id }}"
+            >
+              <div class="card-body p-2">
+                <div
+                  class="d-flex justify-content-between align-items-start mb-2"
+                >
+                  <h6 class="card-title mb-0 text-truncate">
+                    {{ task.title }}
+                  </h6>
+                  <span
+                    class="badge {% if task.priority == 'High' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning text-dark{% else %}bg-primary{% endif %}"
+                  >
+                    {{ task.priority }}
+                  </span>
+                </div>
+                <p class="card-text">
+                  {{ task.project.name }}
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                  Due: {{ task.due_date|date:"M d, Y" }}
+                </div>
+              </div>
+            </div>
+            {% endif %} {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header bg-warning text-dark py-2">
+            <h5 class="mb-0 d-flex justify-content-between align-items-center">
+              <span>In Progress</span>
+              <span class="badge bg-white text-dark" id="kanban-count-In-Progress">0</span>
+            </h5>
+          </div>
+          <div
+            class="card-body kanban-column p-2"
+            data-status="In Progress"
+            ondrop="drop(event)"
+            ondragover="allowDrop(event)"
+          >
+            {% for task in tasks %} {% if task.status == 'In Progress' %}
+            <div
+              class="card task-card mb-2"
+              draggable="true"
+              ondragstart="drag(event)"
+              ondragend="dragEnd(event)"
+              data-task-id="{{ task.id }}"
+            >
+              <div class="card-body p-2">
+                <div
+                  class="d-flex justify-content-between align-items-start mb-2"
+                >
+                  <h6 class="card-title mb-0 text-truncate">
+                    {{ task.title }}
+                  </h6>
+                  <span
+                    class="badge {% if task.priority == 'High' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning text-dark{% else %}bg-primary{% endif %}"
+                  >
+                    {{ task.priority }}
+                  </span>
+                </div>
+                <p class="card-text ">
+                  {{ task.project.name }}
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                  Due: {{ task.due_date|date:"M d, Y" }}
+                </div>
+              </div>
+            </div>
+            {% endif %} {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header bg-info text-white py-2">
+            <h5 class="mb-0 d-flex justify-content-between align-items-center">
+              <span>Review</span>
+              <span class="badge bg-light text-dark" id="kanban-count-Review">0</span>
+            </h5>
+          </div>
+          <div
+            class="card-body kanban-column p-2"
+            data-status="Review"
+            ondrop="drop(event)"
+            ondragover="allowDrop(event)"
+          >
+            {% for task in tasks %} {% if task.status == 'Review' %}
+            <div
+              class="card task-card mb-2"
+              draggable="true"
+              ondragstart="drag(event)"
+              ondragend="dragEnd(event)"
+              data-task-id="{{ task.id }}"
+            >
+              <div class="card-body p-2">
+                <div
+                  class="d-flex justify-content-between align-items-start mb-2"
+                >
+                  <h6 class="card-title mb-0 text-truncate">
+                    {{ task.title }}
+                  </h6>
+                  <span
+                    class="badge {% if task.priority == 'High' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning text-dark{% else %}bg-primary{% endif %}"
+                  >
+                    {{ task.priority }}
+                  </span>
+                </div>
+              <p class="card-text">
+                  {{ task.project.name }}
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                 Due: {{ task.due_date|date:"M d, Y" }}
+                </div>
+              </div>
+            </div>
+            {% endif %} {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3">
+        <div class="card h-100 shadow-sm">
+          <div class="card-header bg-success text-white py-2">
+            <h5 class="mb-0 d-flex justify-content-between align-items-center">
+              <span>Done</span>
+              <span class="badge bg-light text-dark" id="kanban-count-Done">0</span>
+            </h5>
+          </div>
+          <div
+            class="card-body kanban-column p-2"
+            data-status="Done"
+            ondrop="drop(event)"
+            ondragover="allowDrop(event)"
+          >
+            {% for task in tasks %} {% if task.status == 'Done' %}
+            <div
+              class="card task-card mb-2"
+              draggable="true"
+              ondragstart="drag(event)"
+              ondragend="dragEnd(event)"
+              data-task-id="{{ task.id }}"
+            >
+              <div class="card-body p-2">
+                <div
+                  class="d-flex justify-content-between align-items-start mb-2"
+                >
+                  <h6 class="card-title mb-0 text-truncate">
+                    {{ task.title }}
+                  </h6>
+                  <span
+                    class="badge {% if task.priority == 'High' %}bg-danger{% elif task.priority == 'Medium' %}bg-warning text-dark{% else %}bg-primary{% endif %}"
+                  >
+                    {{ task.priority }}
+                  </span>
+                </div>
+                <p class="card-text">
+                  {{ task.project.name }}
+                </p>
+                <div class="d-flex justify-content-between align-items-center">
+                  Due: {{ task.due_date|date:"M d, Y" }}
+                </div>
+              </div>
+            </div>
+            {% endif %} {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Calendar View (Hidden by default) -->
+  <div id="calendarView" style="display: none">
+    <div class="card">
+      <div class="card-body">
+        <div id="taskCalendar" class="calendar-container"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Add Task Modal -->
+<div class="modal fade" id="addTaskModal" tabindex="-1" aria-labelledby="addTaskModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content shadow-lg rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title text-white fw-bold" id="addTaskModalLabel">
+          <i class="bi bi-plus-circle me-2"></i> Add New Task
+        </h5>
+      </div>
+
+      <div class="modal-body">
+        <form id="addTaskForm">
+          {% csrf_token %}
+
+          <!-- Task Title & Project -->
+          <div class="row mb-3 border-bottom pb-3">
+            <div class="col-md-8 mb-3">
+              <label for="taskTitle" class="form-label">
+                <i class="bi bi-clipboard-check me-2"></i> Task Title <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control ellipsis-input" 
+              id="taskTitle" name="title" required maxlength="50" placeholder="Enter task title (3-50 characters)">
+              <div class="invalid-feedback">Task title is required.</div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <label for="taskProject" class="form-label">
+                <i class="bi bi-folder2-open me-2"></i> Project <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="taskProject" name="project" required>
+                <option value="" selected disabled>📁 Select Project</option>
+                {% for project in projects %}
+                  <option value="{{ project.id }}">📂 {{ project.name }}</option>
+                {% endfor %}
+              </select>
+              <div class="invalid-feedback">Select a project.</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-3 border-bottom pb-3">
+            <label for="taskDescription" class="form-label">
+              <i class="bi bi-card-text me-2"></i> Description
+            </label>
+            <textarea class="form-control" id="taskDescription" name="description" rows="3"maxlength="500"
+            ></textarea>
+          </div>
+
+          <!-- Page Name -->
+          <div class="mb-3 border-bottom pb-3">
+            <label for="taskPageName" class="form-label">
+              <i class="bi bi-file-text me-2"></i> Page Name <span class="text-danger">*</span>
+            </label>
+            <div class="page-name-dropdown-container">
+              <div class="dropdown" id="taskPageNameDropdown">
+                <button class="form-select text-start dropdown-toggle" type="button" id="taskPageNameBtn" data-bs-toggle="dropdown" aria-expanded="false" style="text-align: left;">
+                  <span id="taskPageNameDisplay">Select or add page name</span>
+                  <input type="hidden" id="taskPageName" name="page_name" required>
+                </button>
+                <ul
+  class="dropdown-menu"
+  id="taskPageNameMenu"
+  style="min-width: 100%; max-height: 300px; overflow-y: auto;"
+  data-bs-auto-close="outside"
+>
+  <li class="px-3 py-2 border-bottom d-flex align-items-center gap-2">
+    <div class="input-group input-group-sm flex-grow-1">
+      <span class="input-group-text bg-transparent border-end-0">
+        <i class="bi bi-search"></i>
+      </span>
+      <input
+      type="text"
+       id="taskPageNameSearch"
+      placeholder="Search"
+      autocomplete="off"
+    />
+    </div>
+    <button
+      class="btn btn-sm btn-primary"
+      type="button"
+      id="addPageNameBtn"
+      title="Add New Page"
+    >
+      <i class="bi bi-plus"></i>
+    </button>
+  </li>
+
+  <li><hr class="dropdown-divider my-1"></li>
+  <li id="taskPageNameList"></li>
+</ul>
+
+              </div>
+            </div>
+            <div class="invalid-feedback">Page name is required.</div>
+            <div class="form-text">Select a page name or click "Add New" to create one</div>
+          </div>
+
+          <!-- Assignee & Start Date -->
+          <div class="row mb-3 border-bottom pb-3">
+            <div class="col-md-6 mb-3">
+              <label for="taskAssignee" class="form-label">
+                <i class="bi bi-person-check me-2"></i> Assignee <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="taskAssignee" name="assigned_to" required>
+                <option value="" selected disabled>👤 Select Assignee</option>
+              </select>
+              <div class="invalid-feedback">Select an assignee.</div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="taskStartDate" class="form-label">
+                <i class="bi bi-calendar-day me-2"></i> Start Date
+              </label>
+              <input type="date" class="form-control" id="taskStartDate" name="start_date" required>
+              <div class="invalid-feedback">Start date is required.</div>
+            </div>
+          </div>
+
+          <!-- Due Date, Status, Priority -->
+          <div class="row mb-3">
+            <div class="col-md-4 mb-3">
+              <label for="taskDueDate" class="form-label">
+                <i class="bi bi-calendar-event me-2"></i> Due Date <span class="text-danger">*</span>
+              </label>
+              <input type="date" class="form-control" id="taskDueDate" name="due_date" required>
+              <div class="invalid-feedback">Due date is required.</div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <label for="taskStatus" class="form-label">
+                <i class="bi bi-flag me-2"></i> Status <span class="text-danger">*</span>
+              </label>
+             <select class="form-select" id="taskStatus" name="status" required>
+                <option value="" selected disabled>🚩 Select Status</option>
+                <option value="To-do">📝 To-do</option>
+                <option value="In Progress">⚙️ In Progress</option>
+                <option value="Review">🔍 Review</option>
+                <option value="Done">✅ Done</option>
+              </select>
+              <div class="invalid-feedback">Select a status.</div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <label for="taskPriority" class="form-label">
+                <i class="bi bi-exclamation-triangle me-2"></i> Priority <span class="text-danger">*</span>
+              </label>
+             <select class="form-select" id="taskPriority" name="priority" required>
+                <option value="" selected disabled>⚠️ Select Priority</option>
+                <option value="High">🔴 High</option>
+                <option value="Medium">🟡 Medium</option>
+                <option value="Low">🟢 Low</option>
+              </select>
+              <div class="invalid-feedback">Select a priority.</div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i> Cancel
+        </button>
+        <button type="button" class="btn btn-primary" id="saveTaskBtn">
+          <i class="bi bi-save me-1"></i> Save Task
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Edit Task Modal -->
+<div class="modal fade" id="editTaskModal" tabindex="-1" aria-labelledby="editTaskModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content shadow-lg rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title text-white fw-bold" id="editTaskModalLabel">
+          <i class="bi bi-pencil-square me-2"></i> Edit Task
+        </h5>
+      </div>
+      <div class="modal-body">
+        <form id="editTaskForm" novalidate>
+          {% csrf_token %}
+          <input type="hidden" id="editTaskId" name="task_id" />
+
+          <!-- Task Title & Project -->
+          <div class="row mb-3 border-bottom pb-3">
+            <div class="col-md-8 mb-3">
+              <label for="editTaskTitle" class="form-label">
+                <i class="bi bi-clipboard-check me-2"></i> Task Title <span class="text-danger">*</span>
+              </label>
+              <input type="text" class="form-control" id="editTaskTitle" name="title" required maxlength="150" placeholder="Enter task title (3-150 characters)">
+              <div class="invalid-feedback">Task title is required.</div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <label for="editTaskProject" class="form-label">
+                <i class="bi bi-folder me-2"></i> Project <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="editTaskProject" name="project" required>
+                <option value="" selected disabled>📁 Select Project</option>
+                {% for project in projects %}
+                  <option value="{{ project.id }}">📂 {{ project.name }}</option>
+                {% endfor %}
+              </select>
+              <div class="invalid-feedback">Select a project.</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-3 border-bottom pb-3">
+            <label for="editTaskDescription" class="form-label">
+              <i class="bi bi-pencil-square me-2"></i> Description
+            </label>
+            <textarea class="form-control" id="editTaskDescription" name="description" rows="3" maxlength="500"></textarea>
+          </div>
+
+          <!-- Page Name -->
+          <div class="mb-3 border-bottom pb-3">
+            <label for="editTaskPageName" class="form-label">
+              <i class="bi bi-file-text me-2"></i> Page Name <span class="text-danger">*</span>
+            </label>
+            <div class="page-name-dropdown-container">
+              <div class="dropdown" id="editTaskPageNameDropdown">
+                <button class="form-select text-start dropdown-toggle" type="button" id="editTaskPageNameBtn" data-bs-toggle="dropdown" aria-expanded="false" style="text-align: left;">
+                  <span id="editTaskPageNameDisplay">Select or add page name</span>
+                  <input type="hidden" id="editTaskPageName" name="page_name" required>
+                </button>
+                <ul
+                class="dropdown-menu"
+                id="editTaskPageNameMenu"
+                style="min-width: 100%; max-height: 300px; overflow-y: auto;"
+                data-bs-auto-close="outside"
+              >
+                <!-- ✅ Search + Add in one row -->
+                <li class="px-3 py-2 border-bottom d-flex align-items-center gap-2">
+                  <div class="input-group input-group-sm flex-grow-1">
+                    <span class="input-group-text bg-transparent border-end-0">
+                      <i class="bi bi-search"></i>
+                    </span>
+                    <input
+                      type="text"
+                      class="form-control form-control-sm border-start-0"
+                      id="editTaskPageNameSearch"
+                      placeholder="Search page..."
+                      autocomplete="off"
+                    />
+                  </div>
+                  <button
+                    class="btn btn-sm btn-primary"
+                    type="button"
+                    id="editAddPageNameBtn"
+                    title="Add New Page"
+                  >
+                    <i class="bi bi-plus"></i>
+                  </button>
+                </li>
+              
+                <li><hr class="dropdown-divider my-1"></li>
+                <li id="editTaskPageNameList"></li>
+              </ul>
+              
+              </div>
+            </div>
+            <div class="invalid-feedback">Page name is required.</div>
+            <div class="form-text">Select a page name or click "Add New" to create one</div>
+          </div>
+
+          <!-- Assignee & Start Date -->
+          <div class="row mb-3 border-bottom pb-3">
+            <div class="col-md-6 mb-3">
+              <label for="editTaskAssignee" class="form-label">
+                <i class="bi bi-person-badge me-2"></i> Assignee <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="editTaskAssignee" name="assigned_to" required>
+                <option value="" selected disabled>👤 Select Assignee</option>
+                <!-- Options will be populated by JS -->
+              </select>
+              <div class="invalid-feedback">Select an assignee.</div>
+            </div>
+
+            <div class="col-md-6 mb-3">
+              <label for="editTaskStartDate" class="form-label">
+                <i class="bi bi-calendar-event me-2"></i> Start Date
+              </label>
+              <input type="date" class="form-control" id="editTaskStartDate" name="start_date">
+            </div>
+          </div>
+
+          <!-- Due Date, Status & Priority -->
+          <div class="row mb-3">
+            <div class="col-md-4 mb-3">
+              <label for="editTaskDueDate" class="form-label">
+                <i class="bi bi-calendar-check me-2"></i> Due Date <span class="text-danger">*</span>
+              </label>
+              <input type="date" class="form-control" id="editTaskDueDate" name="due_date" required>
+              <div class="invalid-feedback">Due date is required.</div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <label for="editTaskStatus" class="form-label">
+                <i class="bi bi-flag me-2"></i> Status <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="editTaskStatus" name="status" required>
+                <option value="" selected disabled>🚩 Select Status</option>
+                <option value="To-do">📝 To-do</option>
+                <option value="In Progress">⚙️ In Progress</option>
+                <option value="Review">🔍 Review</option>
+                <option value="Done">✅ Done</option>
+              </select>
+              <div class="invalid-feedback">Select a status.</div>
+            </div>
+
+            <div class="col-md-4 mb-3">
+              <label for="editTaskPriority" class="form-label">
+                <i class="bi bi-exclamation-circle me-2"></i> Priority <span class="text-danger">*</span>
+              </label>
+              <select class="form-select" id="editTaskPriority" name="priority" required>
+                <option value="" selected disabled>⚠️ Select Priority</option>
+                <option value="High">🔴 High</option>
+                <option value="Medium">🟡 Medium</option>
+                <option value="Low">🟢 Low</option>
+              </select>
+              <div class="invalid-feedback">Select priority.</div>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i> Cancel
+        </button>
+        <button type="button" class="btn btn-primary" id="updateTaskBtn">
+          <i class="bi bi-save me-1"></i> Update Task
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- View Task Modal -->
+<div
+  class="modal fade"
+  id="viewTaskModal"
+  tabindex="-1"
+  aria-labelledby="viewTaskModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+            <h5 class="modal-title" id="viewTaskModalLabel">Task Details</h5>
+           
+      </div>
+      <div class="modal-body">
+        <div class="row">
+          <div class="col-md-8">
+            <h4 id="viewTaskTitle"class="ellipsis-input" ></h4>
+            <p class="text-muted" id="viewTaskProject"></p>
+
+            <div class="card mb-3">
+              <div class="card-header section-header">
+                <h5 class="mb-0">Description</h5>
+              </div>
+              <div class="card-body">
+                <p class="card-text" id="viewTaskDescription"></p>
+              </div>
+            </div>
+
+            <div class="card mb-3">
+              <div class="card-header section-header">
+                <h5 class="mb-0">Page Name</h5>
+              </div>
+              <div class="card-body">
+                <p class="card-text" id="viewTaskPageName"></p>
+              </div>
+            </div>
+
+            
+          </div>
+
+          <div class="col-md-4">
+            <div class="card mb-3">
+              <div class="card-header section-header">
+                <h4 class="mb-0">Task Details</h4>
+              </div>
+              <div class="card-body">
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Status</label>
+                  <div id="viewTaskStatus"></div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Priority</label>
+                  <div id="viewTaskPriority"></div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Assignee</label>
+                  <div id="viewTaskAssignee"></div>
+                </div>
+
+                 <div class="mb-3">
+                  <label class="form-label fw-bold">Start Date</label>
+                  <div id="viewTaskStartDate"></div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Due Date</label>
+                  <div id="viewTaskDueDate"></div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label fw-bold">Created At</label>
+                  <div id="viewTaskCreated"></div>
+                </div>
+
+                 
+                </div>
+              </div>
+
+              <div class="modal-footer">
+              <div class="ms-3 d-flex gap-2">
+              {% if request.user.userprofile.role == "Manager" %}
+
+              <button type="button" class="btn btn-sm btn-outline-primary" id="viewEditBtn" data-task-id="" title="Edit">
+                <i class="bi bi-pencil"></i> Edit
+              </button>
+              <button type="button" class="btn btn-sm btn-outline-danger" id="viewDeleteBtn" data-task-id="" title="Delete">
+                <i class="bi bi-trash"></i> Delete
+              </button>
+              {% endif %}
+            </div>       
+      </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<div
+  class="modal fade"
+  id="taskModal"
+  tabindex="-1"
+  aria-labelledby="taskModalLabel"
+  aria-hidden="true"
+>
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="taskModalLabel">Task Details</h5>
+      </div>
+      <div class="modal-body">
+        <p><strong>Title:</strong> <span id="taskTitle1"></span></p>
+        <p><strong>Start Date:</strong> <span id="taskStartDate1"></span></p>
+        <p><strong>End Date:</strong> <span id="taskEndDate1"></span></p>
+        <p><strong>Description:</strong> <span id="taskDescription1"></span></p>
+        <p><strong>Status:</strong> <span id="taskStatus1"></span></p>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Daily Status Modal -->
+<div class="modal fade" id="dailyStatusModal" tabindex="-1" aria-labelledby="dailyStatusModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="dailyStatusModalForm">
+        <div class="modal-header">
+          <h5 class="modal-title text-primary fw-semibold" id="dailyStatusModalLabel">
+            <i class="bi bi-journal-check me-2"></i> Add Daily Status
+          </h5>
+        </div>
+        <div class="modal-body">
+          <!-- Project -->
+          <div class="mb-3">
+            <label class="form-label text-primary fw-semibold">
+              <i class="bi bi-folder2-open me-2"></i> Project <span class="text-danger">*</span>
+            </label>
+            <select class="form-select" id="modalDailyStatusProject" name="project">
+              <option value="" selected disabled>📂 Select Project</option>
+              {% for project in projects %}
+              <option value="{{ project.id }}">📋 {{ project.name }}</option>
+              {% endfor %}
+            </select>
+            <div class="invalid-feedback">Please select a project.</div>
+          </div>
+
+          <!-- Status Text -->
+          <div class="mb-3">
+            <label class="form-label text-primary fw-semibold">
+              <i class="bi bi-pencil-square me-2"></i> Status <span class="text-danger">*</span>
+            </label>
+            <textarea class="form-control" id="modalDailyStatusText" name="status_text" rows="3" placeholder="Describe your daily work status..."></textarea>
+            <div class="invalid-feedback">Please describe your daily work status.</div>
+            <div class="form-text">Minimum 10 characters required.</div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+            <i class="bi bi-x-circle me-1"></i> Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check2-circle me-1"></i> Submit Status
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Comment Modal -->
+<div class="modal fade" id="commentModal" tabindex="-1" aria-labelledby="commentModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="commentModalLabel">Comments</h5>
+      </div>
+      <div class="modal-body">
+        <div id="commentModalList" class="mb-3" style="max-height: 400px; overflow-y: auto;"></div>
+        <form id="commentModalForm">
+          {% csrf_token %}
+          <div class="mb-3">
+            <textarea class="form-control" id="commentModalContent" rows="3" placeholder="Enter your comment..." required></textarea>
+          </div>
+        <div class="d-flex justify-content-end">
+            <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Add Page Name Modal -->
+<div class="modal fade" id="pageNameModal" tabindex="-1" aria-labelledby="pageNameModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="pageNameModalLabel">Add Page Name</h5>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="pageNameInput" class="form-label">Page Name</label>
+          <input type="text" class="form-control" id="pageNameInput" placeholder="Enter new page name" />
+          <div class="invalid-feedback" id="pageNameError">Please enter a valid, unique page name.</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-primary" id="savePageNameBtn">Save</button>
+      </div>
+    </div>
+  </div>
+ </div>
+
+<div id="chat-float-btn"><i class="bi bi-chat-dots"></i></div>
+
+<div id="chat-box">
+  <div style="margin-bottom: 10px;">
+    <label for="employee-selector">Select Chat:</label>
+    <select id="employee-selector">
+      <option value="public">All</option>
+      {% if request.user.userprofile.role == "Manager" %}
+        {# Managers: show Developers and Testers #}
+        {% for user in users %}
+          {% if user.username != request.user.username %}
+            <option value="{{ user.username }}">{{ user.username }}</option>
+          {% endif %}
+        {% endfor %}
+      {% else %}
+        {# Developers/Testers: list Managers and preselect team manager if provided #}
+        {% for m in managers %}
+          <option value="{{ m.username }}" {% if manager_username and m.username == manager_username %}selected{% endif %}>{{ m.username }}</option>
+        {% endfor %}
+      {% endif %}
+    </select>
+  </div>
+
+  <div id="chat-header">
+    Chat <span id="chat-close" style="cursor:pointer;">&times;</span>
+  </div>
+
+  <div id="chat-messages"></div>
+
+  <div id="chat-input-area">
+    <input type="text" id="chat-input" placeholder="Type a message..." />
+    <button id="chat-send-btn">Send</button>
+  </div>
+</div>
+
+<!-- Task Distribution Modal -->
+<div class="modal fade" id="taskDistributionModal" tabindex="-1" aria-labelledby="taskDistributionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="taskDistributionModalLabel">
+          <i class="bi bi-pie-chart me-2"></i>Task Distribution Analysis
+        </h5>
+      </div>
+      <div class="modal-body">
+        <div id="distributionContent">
+          <!-- Project cards will be loaded here -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"> <i class="bi bi-x-circle me-1"></i>Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %} 
+
+{% block script %}
+<script>
+  // Expose dynamic values for static JS
+  window.DJ = window.DJ || {};
+  window.DJ.currentUsername = "{{ request.user.username|escapejs }}";
+  window.DJ.currentRole = "{{ request.user.userprofile.role|default:''|escapejs }}";
+  window.DJ.managerUsername = "{{ manager_username|default:''|escapejs }}";
+</script>
+<script src="{% static 'js/tasks.js' %}"></script>
+{% endblock script %}

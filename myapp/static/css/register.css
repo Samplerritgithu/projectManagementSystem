@@ -1,0 +1,262 @@
+
+  .registration-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1rem;
+    box-sizing: border-box;
+  }
+
+  .registration-container {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    max-width: 800px;
+    width: 100%;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    position: relative;
+  }
+
+  /* Welcome Section */
+  .welcome-section {
+    background: var(--sidebar-bg);
+    color: white;
+    padding: 3rem 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+  }
+  [data-theme="dark"] .welcome-section {
+    color: var(--background-color);
+    background: var(--text-color);
+  }
+
+  .welcome-section h2 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    font-weight: 700;
+  }
+
+  .welcome-section p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+  }
+  [data-theme="dark"] .welcome-section {
+    background: #f7f7f7;
+    color: black;
+  }
+
+  /* Form Section */
+  .form-section {
+    background-color: var(--form-bg);
+    padding: 2.5rem;
+    position: relative;
+  }
+
+  .form-container {
+    width: 100%;
+  }
+
+  .form-container h3 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+    color: var(--primary-color);
+    text-align: center;
+    font-weight: 600;
+  }
+  [data-theme="dark"] .form-container h3 {
+    color: #ffffff;
+  }
+
+  /* Form Grid Layout */
+  .form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  /* Form Group Styles */
+  .form-group {
+    margin-bottom: 1rem;
+    position: relative;
+  }
+
+  .form-group.full-width {
+    grid-column: span 2;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 500;
+    color: var(--text-color);
+    font-size: 0.9rem;
+  }
+
+  .form-group input,
+  .form-group select {
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    background-color: var(--input-bg);
+    color: var(--text-color);
+  }
+
+  .form-group input:focus,
+  .form-group select:focus {
+    border-color: var(--primary-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(30, 136, 229, 0.2);
+  }
+
+  /* Error Message Styling */
+  .error-message {
+    font-size: 0.8rem;
+    color: red;
+    margin-top: 0.3rem;
+    display: block;
+  }
+
+  /* Password Group Styles */
+  .password-group {
+    position: relative;
+  }
+
+  .password-container {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .password-container input {
+    flex: 1;
+    padding-right: 40px; /* space for eye icon */
+  }
+
+  .password-container i {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    color: var(--text-color);
+    opacity: 0.7;
+    font-size: 1.2rem;
+  }
+
+  /* Button Styles */
+  .btn-register,
+  .btn-danger {
+    width: 100%;
+    padding: 0.8rem;
+    background: linear-gradient(
+      to right,
+      var(--primary-color),
+      var(--secondary-color)
+    );
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-top: 0.5rem;
+  }
+  .button-group {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .button-group .btn-register,
+  .button-group .btn-danger {
+    width: 48%;
+  }
+
+  .btn-register:hover,
+  .btn-danger:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(30, 136, 229, 0.3);
+  }
+
+  [data-theme="dark"] .btn-register,
+  .btn-danger {
+    background: #ffffff !important;
+    color: #111111 !important;
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.2);
+  }
+
+  [data-theme="dark"] .btn-register:hover {
+    opacity: 0.95;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(255, 255, 255, 0.3);
+  }
+
+  /* Theme Toggle Button */
+  .theme-toggle {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Toastr Position Fix */
+  #toast-container > .toast {
+    font-size: 0.9rem;
+    border-radius: 6px;
+    padding: 12px 15px;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .registration-container {
+      grid-template-columns: 1fr;
+    }
+
+    .welcome-section {
+      padding: 2rem 1.5rem;
+    }
+
+    .form-section {
+      padding: 1.8rem;
+    }
+
+    .form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .form-group.full-width {
+      grid-column: span 1;
+    }
+  }
+/* Default (light theme) */
+.welcome-section h2,
+.welcome-section p {
+  color: #f0e9e9 !important; /* dark text for light backgrounds */
+}
+
+/* Dark theme text adjustment */
+[data-theme="dark"] .welcome-section h2,
+[data-theme="dark"] .welcome-section p {
+  color: #313030 !important; /* white text for dark backgrounds */
+}

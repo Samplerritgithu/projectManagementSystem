@@ -1,0 +1,425 @@
+/* =============================
+   General Layout
+============================= */
+.content-wrapper {
+  padding: 10px 20px;
+  width: 100%;
+  max-width: 1400px;
+  margin: 20px auto 0 auto;
+}
+
+/* Equal height for both columns */
+.content-wrapper .row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: stretch;
+}
+
+.content-wrapper .col-md-6 {
+  display: flex;
+  flex-direction: column;
+}
+
+/* =============================
+   Form Container (Left Side)
+============================= */
+.form-container {
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 8px;
+  width: 100%;
+  max-width: 600px;
+  margin: 0 auto 2rem auto;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  height: 100%;
+}
+
+.form-container h2 {
+  color: var(--text-color);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 1.5rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--text-color);
+  font-weight: 500;
+}
+
+.form-control,
+.form-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  transition: border-color 0.2s ease;
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(29, 78, 216, 0.1);
+  outline: none;
+}
+
+/* =============================
+   Team List Wrapper (Right Side)
+============================= */
+.team-list-wrapper {
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+}
+
+.team-list-wrapper h2 {
+  color: var(--text-color);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+/* Empty state message */
+.team-list-wrapper > p,
+.team-list-wrapper .empty-placeholder {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  font-size: 1rem;
+  margin: 0;
+}
+
+/* Scrollable area for team cards */
+.team-cards-scroll {
+  flex: 1 1 auto;
+  max-height: 500px;
+  overflow-y: auto;
+  padding-right: 8px;
+}
+
+.team-cards-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.team-cards-scroll::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 6px;
+}
+
+/* =============================
+   Teams Section
+============================= */
+.teams-section {
+  margin-top: 1.5rem; /* slightly less margin */
+}
+
+.teams-section h2 {
+  color: var(--text-color);
+  font-size: 1.35rem; /* slightly smaller */
+  font-weight: 600;
+  margin-bottom: 1rem; /* reduce spacing */
+}
+
+.team-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); /* smaller cards */
+  gap: 1rem; /* reduce gap */
+  margin-top: 1rem;
+}
+
+/* No matching teams message styling */
+#no-matching-teams-message {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  min-height: 300px;
+}
+
+#no-matching-teams-message i {
+  font-size: 3rem;
+  color: #ccc;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+#no-matching-teams-message p {
+  margin: 0;
+}
+
+#no-matching-teams-message p:first-of-type {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+#no-matching-teams-message p:last-of-type {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  opacity: 0.7;
+}
+
+/* Individual Team Card */
+.team-card {
+  padding: 1rem; /* reduce padding */
+  border-radius: 8px;
+  box-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.08); /* lighter shadow */
+  border: 1px solid #0e0e0e; /* subtle gray border */
+
+}
+
+
+
+.team-card h4 {
+  color: var(--text-color);
+  font-size: 1.1rem; /* smaller heading */
+  font-weight: 600;
+  margin-bottom: 0.75rem; /* reduced spacing */
+  
+}
+
+.team-card p {
+  color: var(--text-color);
+  margin-bottom: 0.4rem;
+  font-size: 0.9rem; /* slightly smaller text */
+}
+
+.team-card p strong {
+  color: var(--primary-color);
+}
+
+/* Single-line ellipsis for long member lists */
+.team-card .members-ellipsis {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.team-card-buttons {
+  display: flex;
+  gap: 0.5rem; /* smaller button gap */
+  margin-top: 0.75rem; /* reduce top margin */
+}
+
+.team-card-buttons .btn {
+  padding: 0.25rem 0.5rem; /* smaller buttons */
+  font-size: 0.8rem;
+}
+
+
+
+.members-list {
+  max-height: none; /* allow it to grow naturally if few members */
+  overflow-y: hidden; /* no scroll if not needed */
+  padding: 8px 0;
+}
+
+/* Modal height adjustments for better visibility */
+#teamModal .modal-dialog {
+  max-height: 90vh;
+}
+
+#teamModal .modal-content {
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+#teamModal .modal-body {
+  overflow-y: auto;
+  flex: 1 1 auto;
+  max-height: calc(90vh - 200px); /* Leave space for header and footer */
+  padding: 1.5rem;
+}
+
+/* Ensure the members dropdown container has proper positioning */
+.mb-3.position-relative {
+  position: relative;
+  z-index: 1;
+}
+
+/* Members dropdown styling */
+#members-dropdown-content {
+  display: none;
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 1050; /* Higher than modal z-index to appear on top */
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 4px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-top: 4px;
+  max-height: 400px; /* Increased max height */
+}
+
+#members-dropdown-content.show,
+#members-dropdown-content[style*="block"] {
+  display: block !important;
+}
+
+/* Ensure the members-list respects the dropdown's available height (leaving space for search) */
+#members-dropdown-content .members-list {
+  min-height: 160px; /* Show at least 4 members (40px each) */
+  max-height: calc(400px - 56px); /* increased max height for better visibility */
+  height: auto; /* 🧩 grow based on number of members */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+.dropdown-content .members-list {
+  min-height: 160px; /* Show at least 4 members (40px each) */
+  max-height: calc(400px - 56px); /* increased max height for better visibility */
+  height: auto; /* 🧩 grow based on number of members */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+}
+
+
+.members-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.members-list::-webkit-scrollbar-thumb {
+  background-color: #ccc;
+  border-radius: 6px;
+}
+
+.member-option {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  min-height: 40px; /* Ensure consistent height for at least 4 visible members */
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.member-option:hover {
+  background-color: var(--hover-bg, #f5f5f5);
+}
+
+.member-option.hidden {
+  display: none;
+}
+
+.member-option .form-check-input {
+  margin-right: 8px;
+  margin-top: 0;
+}
+
+.member-option .form-check-label {
+  cursor: pointer;
+  margin-bottom: 0;
+  flex: 1;
+  color: var(--text-color);
+}
+
+.member-option .form-check-input:checked + .form-check-label {
+  color: var(--primary-color);
+  font-weight: 500;
+}
+
+/* Selected members display */
+.selected-members {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.selected-member-tag {
+  background: var(--primary-color);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.selected-member-tag .remove-btn {
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+  margin-left: 4px;
+}
+
+.selected-member-tag .remove-btn:hover {
+  color: #ffcccb;
+}
+
+/* =============================
+   Responsive
+============================= */
+@media (max-width: 768px) {
+  .content-wrapper {
+    padding: 1rem;
+  }
+
+  .form-container {
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .team-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .content-wrapper .row {
+    flex-direction: column;
+  }
+}
+@media (max-width: 900px) {
+  .d-flex.align-items-center.justify-content-between {
+    min-height: 109px !important;
+  }
+}
+@media (max-width: 400px) {
+  .d-flex.align-items-center.justify-content-between {
+    min-height: 112px !important;
+  }
+}
+/* 🌙 Dark theme headings, paragraphs, and spans */
+[data-theme="dark"] h4,
+[data-theme="dark"] p,
+[data-theme="dark"] span {
+  color: #f2eaea !important; /* white text */
+  opacity: 1;             /* full visibility */
+}
+[data-theme="dark"] .btn-danger {
+  background-color: #dc3545 !important; /* Bootstrap red */
+  color: white !important;
+  border: none;
+}
+
+
+[data-theme="dark"] .team-card {
+  border: 1px solid #ebedf0; /* subtle gray border */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4); /* soft shadow for depth */
+}

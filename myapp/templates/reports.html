@@ -1,0 +1,442 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/reports.css' %}" />
+<style>
+    .card {
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 12px;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .card-header {
+        background: linear-gradient(135deg, #2a68c4 0%, #4a8ef0 100%);
+        color: white;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+    }
+    .card-header h5 {
+        color: white;
+        margin: 0;
+    }
+    .card-body {
+        padding: 1.5rem;
+    }
+    .table-striped > tbody > tr:nth-of-type(odd) > td {
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+    .table-hover > tbody > tr:hover > td {
+        background-color: rgba(102, 126, 234, 0.1);
+        transition: background-color 0.2s;
+    }
+    .btn-outline-primary {
+        border-color: #667eea;
+        color: #667eea;
+    }
+    .btn-outline-primary:hover {
+        background-color: #667eea;
+        border-color: #667eea;
+        color: white;
+    }
+    .btn-outline-success {
+        border-color: #28a745;
+        color: #28a745;
+    }
+    .btn-outline-success:hover {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        transition: transform 0.2s;
+    }
+    .btn-primary:hover {
+        transform: scale(1.05);
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+    h3 {
+        color: #667eea;
+        font-weight: 700;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    h5, h6 {
+        color: #495057;
+        font-weight: 600;
+    }
+    #projectOverviewTable thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+    /* Redesigned Project Overview table */
+    .project-overview-wrap {
+        border: 1px solid #dee2e6;
+        border-radius: 10px;
+        overflow: hidden; /* keeps sticky header edges clean */
+        background: #fff;
+    }
+    #projectOverviewTable {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    #projectOverviewTable colgroup col:nth-child(1) { width: 32%; }
+    #projectOverviewTable colgroup col:nth-child(2) { width: 16%; }
+    #projectOverviewTable colgroup col:nth-child(3) { width: 16%; }
+    #projectOverviewTable colgroup col:nth-child(4) { width: 16%; }
+    #projectOverviewTable colgroup col:nth-child(5) { width: 20%; }
+    #projectOverviewTable thead th {
+        position: sticky;
+        top: -1px; /* tuck header closer to the container's top border */
+        z-index: 3;
+        background-color: #f8f9fa !important;
+        border-top: 0 !important;
+        border-bottom: 1px solid #dee2e6;
+        box-shadow: 0 2px 0 rgba(0,0,0,0.05);
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
+    }
+    #projectOverviewTable th,
+    #projectOverviewTable td {
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    #projectOverviewTable tbody tr {
+        height: 56px; /* slightly tighter than before */
+    }
+    #projectOverviewTable tbody tr:hover td {
+        background-color: rgba(102, 126, 234, 0.06);
+    }
+    .project-overview-scroll {
+        max-height: 350px;
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    /* Status badge styles */
+    .status-badge {
+        display: inline-block;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+        border-radius: 999px;
+        border: 1px solid transparent;
+        background: #f1f3f5;
+        color: #495057;
+    }
+    .status-badge.success { background: #e6f4ea; color: #1e7e34; border-color: #ccebd6; }
+    .status-badge.warning { background: #fff4e5; color: #b35c00; border-color: #ffd8a8; }
+    .status-badge.info { background: #e7f0ff; color: #2b6cb0; border-color: #cfe2ff; }
+    .status-badge.danger { background: #ffe3e3; color: #c92a2a; border-color: #ffc9c9; }
+    /* Progress bar */
+    .progress.progress-thin { height: 8px; border-radius: 999px; background-color: #edf2f7; }
+    .progress.progress-thin .progress-bar { border-radius: 999px; background: linear-gradient(90deg, #667eea, #764ba2); }
+    /* Project Overview table UI/UX fixes */
+    #projectOverviewTable {
+        width: 100%;
+        table-layout: fixed;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+    #projectOverviewTable thead th {
+        position: sticky;
+        top: 0; /* keep header flush with the top of the scroll area */
+        z-index: 3;
+        background-color: #f8f9fa !important; /* ensure solid bg over rows */
+        box-shadow: 0 2px 0 rgba(0,0,0,0.05);
+        border-top: 0 !important; /* avoid a 1px gap that looks like offset */
+    }
+    #projectOverviewTable th,
+    #projectOverviewTable td {
+        vertical-align: middle;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis; /* prevent content from flowing outside when scrolling */
+    }
+    .project-overview-scroll {
+        /* smooth scrolling, keeps header sticky within this container */
+        overflow: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+    .table-responsive::-webkit-scrollbar {
+        width: 8px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+    .project-overview-scroll {
+        /* Limit visible rows to approximately 5 rows (each row ~60px) */
+        max-height: 350px;
+    }
+    .project-overview-scroll tbody tr {
+        height: 60px;
+    }
+</style>
+{% endblock style %}
+
+{% block content %}
+<div class="container-fluid  pb-2">
+    <div class="row mb-4">
+        <div class="col-12">
+        <div class="d-flex align-items-center justify-content-center" style="min-height: 60px;">
+        <h3>Reports</h3>
+    </div>
+            
+            <!-- Date Range Filter -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Date Range Filter</h5>
+                    <form id="dateRangeForm" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="startDate" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="startDate">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="endDate" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="endDate">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary">Apply Filter</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Project Reports Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Project Reports</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary me-2" onclick="exportReport('project', 'pdf')">
+                            <i class="bi bi-file-pdf"></i> PDF
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="exportReport('project', 'excel')">
+                            <i class="bi bi-file-excel"></i> Excel
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <h6 class="mb-0">Project Overview</h6>
+                                <small class="text-muted">Scroll to see more projects</small>
+                            </div>
+                            <div class="project-overview-wrap">
+                                <div class="table-responsive project-overview-scroll">
+                                    <table class="table mb-0" id="projectOverviewTable">
+                                        <colgroup>
+                                            <col />
+                                            <col />
+                                            <col />
+                                            <col />
+                                            <col />
+                                        </colgroup>
+                                        <thead>
+                                            <tr>
+                                                <th><i class="bi bi-kanban me-1"></i> Project</th>
+                                                <th><i class="bi bi-flag me-1"></i> Status</th>
+                                                <th><i class="bi bi-calendar-event me-1"></i> Start</th>
+                                                <th><i class="bi bi-calendar-check me-1"></i> End</th>
+                                                <th><i class="bi bi-graph-up me-1"></i> Progress</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Example rendering expectation (data injected by JS):
+                                            <tr>
+                                                <td title="Project Phoenix">Project Phoenix</td>
+                                                <td><span class="status-badge success">On Track</span></td>
+                                                <td>2025-09-01</td>
+                                                <td>2026-02-15</td>
+                                                <td>
+                                                    <div class="progress progress-thin">
+                                                        <div class="progress-bar" role="progressbar" style="width: 62%" aria-valuenow="62" aria-valuemin="0" aria-valuemax="100"></div>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            -->
+                                            <!-- Project data will be loaded here -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Project Progress</h6>
+                            <canvas id="projectProgressChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Reports Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Task Reports</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-primary me-2" onclick="exportReport('task', 'pdf')">
+                            <i class="bi bi-file-pdf"></i> PDF
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="exportReport('task', 'excel')">
+                            <i class="bi bi-file-excel"></i> Excel
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                      <div class="col-md-4 text-center">
+                            <h6>Tasks by Status</h6>
+                            <div style="height: 250px;">
+                                <canvas id="taskStatusChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4 text-center">
+                            <h6>Tasks by Priority</h6>
+                            <div style="height: 250px;">
+                                <canvas id="taskPriorityChart"></canvas>
+                            </div>
+                        </div>
+
+                        <div class="col-md-4">
+                            <h6>Overdue Tasks</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm" id="overdueTasksTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Task</th>
+                                            <th>Due Date</th>
+                                            <th>Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <!-- Overdue tasks will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Performance Section -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">Team Performance</h5>
+                    <div class="d-flex align-items-center gap-2">
+                        <select id="teamPeriod" class="form-select form-select-sm" style="width:auto">
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly" selected>Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                        <button class="btn btn-sm btn-outline-primary me-2" onclick="exportReport('team', 'pdf')">
+                            <i class="bi bi-file-pdf"></i> PDF
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="exportReport('team', 'excel')">
+                            <i class="bi bi-file-excel"></i> Excel
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Task Completion by Member</h6>
+                            <canvas id="teamPerformanceChart"></canvas>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="d-flex align-items-center justify-content-between">
+                                <h6 class="mb-0">Team Performance Scatter</h6>
+                            </div>
+                            <small class="text-muted">X: total tasks in bucket, bubble size: % completed, Y: time bucket</small>
+                            <canvas id="teamScatterChart" class="mt-2"></canvas>
+                        </div>
+                    </div>
+                  
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+   <!-- Burndown Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Burndown</h5>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary me-2" onclick="exportReport('burndown', 'pdf')">
+                        <i class="bi bi-file-pdf"></i> PDF
+                    </button>
+                    <button class="btn btn-sm btn-outline-success" onclick="exportReport('burndown', 'excel')">
+                        <i class="bi bi-file-excel"></i> Excel
+                    </button>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Remaining Tasks Over Time</h6>
+                        <canvas id="burndownChart"></canvas>
+                    </div>
+                <div class="col-md-6">
+    <h6>Snapshot (Task Calendar)</h6>
+
+    <!-- Inline Calendar -->
+    <input type="text" id="burndownCalendar" class="form-control form-control-sm" />
+
+    <!-- Daily Summary -->
+    <div id="burndownDaySummary" class="p-2 border rounded small text-muted mt-2">
+        Select a date to view burndown details.
+    </div>
+</div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block script %}
+<script src="{% static 'js/reports.js' %}"></script>
+{% endblock script %}

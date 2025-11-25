@@ -1,0 +1,75 @@
+  #addmember1{
+    display: none;
+  }
+  /* Limit project and role text to 2 lines with ellipsis */
+.member-card .card-text {
+  display: -webkit-box;        /* create a flexbox for line clamping */
+  -webkit-line-clamp: 2;       /* show only 2 lines */
+  -webkit-box-orient: vertical;
+  overflow: hidden;            /* hide overflowed text */
+  text-overflow: ellipsis;     /* add ellipsis */
+  word-break: break-word;      /* ensure long words break nicely */
+}
+
+/* Single-line clamp for long names */
+.member-card .card-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Optional: Make labels bold but text consistent */
+.member-card .card-text strong {
+  font-weight: 600;
+  color: #333;
+}
+
+
+@media (max-width: 900px) {
+  .d-flex.align-items-center.justify-content-between {
+    min-height: 120px !important;
+  }
+}
+@media (max-width: 400px) {
+  .d-flex.align-items-center.justify-content-between {
+    min-height: 105px !important;
+  }
+}
+
+
+  
+/* No matching teams message styling */
+#noMembersFound {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem 2rem;
+  min-height: 300px;
+}
+
+#noMembersFound i {
+  font-size: 3rem;
+  color: #ccc;
+  margin-bottom: 1rem;
+  opacity: 0.6;
+}
+
+#noMembersFound p {
+  margin: 0;
+}
+
+#noMembersFound p:first-of-type {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-color);
+  margin-bottom: 0.5rem;
+}
+
+#noMembersFound p:last-of-type {
+  font-size: 0.9rem;
+  color: var(--text-color);
+  opacity: 0.7;
+}
+

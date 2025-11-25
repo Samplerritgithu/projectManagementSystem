@@ -1,0 +1,116 @@
+{% extends "base.html"%}
+{% load static%}
+{% block title%}Home{% endblock title%}
+{% block home %}
+<div id="carouselExampleFade" class="carousel slide carousel-fade" style="margin-top: 50px;">
+    <div class="carousel-inner container-fluid">  <!-- Corrected class here -->
+      <div class="carousel-item active">
+        <img src="{% static 'images/image1.jpg' %}" class="d-block mx-auto" style="width: 90%; height: 400px; object-fit: cover;" alt="...">
+      </div>
+      <div class="carousel-item">
+        <img src="{% static 'images/image2.jpg' %}" class="d-block mx-auto" style="width: 90%; height: 400px; object-fit: cover;" alt="...">
+      </div>
+      <div class="carousel-item">
+        <img src="{% static 'images/image3.jpg' %}" class="d-block mx-auto" style="width: 90%; height: 400px; object-fit: cover;" alt="...">
+      </div>
+    </div>
+  
+    <!-- Carousel controls -->
+    <button class="carousel-control-prev" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="prev">
+      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Previous</span>
+    </button>
+    <button class="carousel-control-next" type="button" data-bs-target="#carouselExampleFade" data-bs-slide="next">
+      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+      <span class="visually-hidden">Next</span>
+    </button>
+  </div>
+  <div class="container-fluid d-flex align-items-center justify-content-center" style="margin-top: 50px;">
+    <div class="row g-0 align-items-center w-100"> <!-- w-100 ensures the row takes full width -->
+      
+      <!-- Image on the left -->
+      <div class="col-md-2"> <!-- Image will take 3 out of 12 columns -->
+        <img src="{% static 'images/image3.jpg' %}" class="img-fluid rounded-start" alt="Card image" style="height: 200px; border-radius: 20px; object-fit: cover;">
+      </div>
+      
+      <!-- Text on the right with added gap between -->
+      <div class="col-md-9 ms-3"> <!-- ms-3 adds left margin for horizontal gap between image and text -->
+        <div class="card-body">
+          <h5 class="card-title">Your Title Here</h5>
+          <p class="card-text">This is a sample description or content that goes alongside the image. You can add more text or content here, and it will be displayed on the right side of the image.</p>
+          <p class="card-text"><small class="text-muted">Additional text or footer content.</small></p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container-fluid d-flex align-items-center justify-content-center" style="margin-top: 50px;">
+    <div class="row g-0 align-items-center w-100"> <!-- Single row for image and text -->
+      
+      <!-- Text on the left -->
+      <div class="col-md-9 "> <!-- Text takes up 9 columns and adds right margin -->
+        <div class="card-body">
+          <h5 class="card-title">Thesis</h5>
+          <p class="card-text">This is a sample description or content that goes alongside the image. You can add more text or content here, and it will be displayed on the left side of the image.</p>
+          <p class="card-text"><small class="text-muted">Additional text or footer content.</small></p>
+        </div>
+      </div>
+      
+      <!-- Image on the right -->
+      <div class="col-md-3"> <!-- Image takes up 3 columns -->
+        <img src="{% static 'images/image2.jpg' %}" class="img-fluid rounded-start" alt="Card image" style="height: 200px; border-radius: 20px; object-fit: cover;">
+    </div>
+    <div class="container" style="margin-top: 50px;">
+      <h2 class="text-center mb-4">Help Form</h2>
+      <form id="helpForm" action="{% url 'helpRequest' %}" method="POST">
+          {% csrf_token %}
+          <div class="mb-3">
+              <label for="helpType" class="form-label">Select Help Type</label>
+              <select class="form-select" id="helpType" name="help_type" required>
+                  <option value="" disabled selected>Select a type</option>
+                  <option value="technical">Technical Support</option>
+                  <option value="account">Account Issues</option>
+                  <option value="general">General Inquiry</option>
+              </select>
+          </div>
+  
+          <!-- Question Input -->
+          <div class="mb-3">
+              <label for="question" class="form-label">Your Question</label>
+              <textarea class="form-control" id="question" rows="4" placeholder="Please describe your issue or question here..." required name="question"></textarea>
+          </div>
+  
+          <!-- Submit Button -->
+          <div class="d-flex justify-content-center mb-5">
+              <button type="submit" class="btn btn-primary">Submit</button>
+          </div>
+      </form>
+  </div>
+  
+
+    
+   
+    
+   
+    
+  
+<!-- Footer -->
+<footer class="bg-dark text-white text-center py-3">
+    <p>&copy; 2025 Your Company. All Rights Reserved.</p>
+</footer>
+
+
+{% comment %} <script>
+    // JavaScript to handle form submission and show modal
+    document.getElementById("helpForm").addEventListener("submit", function(event) {
+        event.preventDefault(); // Prevents form from refreshing the page
+        
+        // Show the modal after the form is "submitted"
+        var myModal = new bootstrap.Modal(document.getElementById('submitModal'));
+        myModal.show();
+    });
+</script> {% endcomment %}
+
+  
+  
+    {% endblock home%}

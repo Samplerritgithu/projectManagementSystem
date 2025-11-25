@@ -1,0 +1,528 @@
+  
+
+    @keyframes floatParticles {
+        0% { transform: translateY(0px) translateX(0px); }
+        50% { transform: translateY(-20px) translateX(10px); }
+        100% { transform: translateY(0px) translateX(0px); }
+    }
+
+    #addproject1 {
+        display: none;
+    }
+
+    /* Futuristic Glassmorphism Cards */
+    .project-card-inner {
+        height: 380px;
+        width: 100%;
+        display: flex;
+        flex-direction: column;
+        background: rgba(240, 248, 255, 0.95);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 18px;
+        box-shadow: 
+            0 5px 20px rgba(0, 0, 0, 0.08),
+            0 0 0 1px rgba(255, 255, 255, 0.8),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        position: relative;
+        overflow: hidden;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        transform-style: preserve-3d;
+        perspective: 1000px;
+    }
+    
+    .project-card-inner::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 24px;
+    padding: 2px;
+    background: linear-gradient(135deg, #00d4ff, #ff0080, #00d4ff);
+    mask: linear-gradient(rgba(255, 255, 255, 0.5) 0 0) content-box, linear-gradient(rgba(255, 255, 255, 0.5) 0 0);
+    mask-composite: exclude;
+    -webkit-mask-composite: destination-out; /* For Webkit support */
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+    
+    .project-card-inner:hover::before {
+        opacity: 1;
+    }
+    
+    .project-card-inner:hover {
+        transform: translateY(-8px) scale(1.02) rotateX(5deg);
+        box-shadow: 
+            0 20px 40px rgba(0, 0, 0, 0.15),
+            0 0 0 1px rgba(255, 255, 255, 0.9),
+            inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+
+    .project-title {
+        font-size: 1.2rem;
+        font-weight: 700;
+        line-height: 1.3;
+       
+        width: 100%;
+        flex-shrink: 0;
+        margin: 0;
+        padding: 0;
+        background: linear-gradient(135deg, #1f2937, #374151);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+        text-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .project-description {
+        font-size: 0.95rem;
+        line-height: 1.5;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 5;
+        line-clamp: 5;
+        -webkit-box-orient: vertical;
+        white-space: normal;
+        height: auto;
+        margin-bottom: 1rem;
+        word-wrap: break-word;
+        color: #374151;
+    }
+
+    .project-client {
+        font-size: 0.9rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: #6b7280;
+    }
+    /* Futuristic floating entrance */
+    .project-card { perspective: 1000px; }
+    @keyframes floatIn { 
+        0% { 
+            opacity: 0; 
+            transform: translateY(40px) translateZ(-100px) rotateX(45deg) scale(0.8); 
+            filter: blur(10px);
+        }
+        50% { 
+            opacity: 0.8; 
+            transform: translateY(-10px) translateZ(20px) rotateX(-5deg) scale(1.05); 
+            filter: blur(2px);
+        }
+        100% { 
+            opacity: 1; 
+            transform: translateY(0) translateZ(0) rotateX(0deg) scale(1); 
+            filter: blur(0px);
+        }
+    }
+    .anim-flyflip { 
+        backface-visibility: hidden; 
+        transform-style: preserve-3d; 
+        animation: floatIn 800ms cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards; 
+    }
+
+    @keyframes filtersDrop { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulseBorder {
+        0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.45); }
+        70% { box-shadow: 0 0 0 12px rgba(59,130,246,0); }
+        100% { box-shadow: 0 0 0 0 rgba(59,130,246,0); }
+    }
+
+    /* Enhanced progress rings for glassmorphism */
+    .progress-ring { 
+        position: relative; 
+        width: 76px; 
+        height: 76px; 
+        flex-shrink: 0; 
+        filter: drop-shadow(0 0 10px rgba(0, 212, 255, 0.3));
+    }
+    .progress-ring svg { 
+        transform: rotate(-90deg); 
+        width: 76px; 
+        height: 76px; 
+        filter: drop-shadow(0 0 8px rgba(255, 255, 255, 0.2));
+    }
+    .progress-ring .bg { 
+        stroke: rgba(255, 255, 255, 0.1); 
+        stroke-width: 8; 
+        fill: none; 
+    }
+    .progress-ring .fg { 
+        stroke: url(#grad1); 
+        stroke-width: 8; 
+        stroke-linecap: round; 
+        fill: none; 
+        transition: stroke-dashoffset 900ms ease;
+        filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.5));
+    }
+    .progress-ring .center { 
+        position: absolute; 
+        inset: 0; 
+        display: grid; 
+        place-items: center; 
+        font-weight: 700; 
+        font-size: 0.95rem; 
+        color: #1f2937;
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+    .progress-meta { 
+        display: flex; 
+        flex-direction: column; 
+    }
+    .progress-meta .label { 
+        font-size: 0.8rem; 
+        text-transform: uppercase; 
+        letter-spacing: 0.08em; 
+        color: #6b7280;
+        font-weight: 500;
+    }
+    .progress-meta .value { 
+        font-size: 1rem; 
+        font-weight: 600; 
+        color: #1f2937;
+        text-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    }
+    .chip { 
+        display: inline-flex; 
+        align-items: center; 
+        gap: 6px; 
+        padding: 8px 12px; 
+        border-radius: 12px; 
+        background: rgba(0, 0, 0, 0.05); 
+        font-size: 0.85rem; 
+        color: #374151;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 0, 0, 0.1);
+    }
+    
+    .status-badge-completed {
+        background: linear-gradient(135deg, #10b981, #059669);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    
+    .status-badge-inprogress {
+        background: linear-gradient(135deg, #f59e0b, #d97706);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    
+    .status-badge-onhold {
+        background: linear-gradient(135deg, #ef4444, #dc2626);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+    
+    .status-badge-planning {
+        background: linear-gradient(135deg, #3b82f6, #2563eb);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        color: white;
+    }
+
+   
+
+    .progress .progress-bar {
+        width: var(--progress, 0%);
+    }
+
+    #viewProjectName {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        -webkit-box-orient: vertical;
+        word-break: break-word;
+    }
+
+    .project-card {
+        transition: transform 0.1s ease-out;
+    }
+/* ✅ Remove box-shadow and color highlight */
+.form-control.is-valid,
+.form-control.is-invalid {
+  box-shadow: none !important;
+}
+
+.form-control.is-valid {
+  border-color: #ced4da !important; /* default gray border */
+}
+
+.form-control.is-invalid {
+  border-color: #dc3545 !important; /* optional: keep red border, no glow */
+}
+
+/* 🌙 Dark theme — solid black text */
+[data-theme="dark"] .project-title {
+  background: none !important;
+  color: #e5e0e0 !important; /* solid black */
+  -webkit-background-clip: unset;
+  background-clip: unset;
+  text-shadow: none;
+}
+/* 🌙 Dark theme textarea — black text */
+[data-theme="dark"] textarea.form-control {
+  color: #000 !important;               /* black text */
+  border: 1px solid #ccc !important;
+}
+
+/* Placeholder text color in dark theme */
+[data-theme="dark"] textarea.form-control::placeholder {
+  color: #333 !important; /* dark placeholder */
+  opacity: 1;             /* ensure full visibility */
+}
+/* 🌙 Dark theme — make text elements black */
+[data-theme="dark"] p,
+[data-theme="dark"] span,
+[data-theme="dark"] .project-description {
+  color: #000 !important; /* solid black text */
+}
+/* 🌙 Dark theme card header styling */
+[data-theme="dark"] .card-header {
+  background-color: #1e1e1e !important; /* dark background */
+  color: #ffffff !important;            /* white text */
+  border-bottom: 1px solid #333 !important; /* subtle border */
+}
+
+/* Optional — make header buttons look better in dark mode */
+[data-theme="dark"] .card-header .btn {
+  background-color: #2c2c2c !important;
+  color: #fff !important;
+  border-color: #444 !important;
+}
+
+[data-theme="dark"] .card-header .btn:hover {
+  background-color: #3a3a3a !important;
+  color: #fff !important;
+}
+
+/* 🌙 Dark theme — make muted/small text white */
+[data-theme="dark"] .text-muted,
+[data-theme="dark"] small,
+[data-theme="dark"] .card .text-muted {
+  color: #ffffff !important; /* pure white text */
+  opacity: 0.9; /* slightly soft white look */
+}
+@media (max-width: 900px) {
+  .d-flex.align-items-center.justify-content-between {
+    min-height: 109px !important;
+  }
+}
+
+/* 🌙 Dark theme textarea — white text */
+[data-theme="dark"] textarea.form-control {
+  color: #fff !important;               /* white text */
+  background-color: #1e1e1e !important; /* dark background */
+  border: 1px solid #555 !important;    /* subtle border for dark theme */
+}
+
+/* Placeholder text color in dark theme — white */
+[data-theme="dark"] textarea.form-control::placeholder {
+  color: #555 !important; /* white placeholder */
+  opacity: 1;             /* ensure full visibility */
+}
+
+
+.card {
+        border: none;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        transition: transform 0.2s, box-shadow 0.2s;
+        border-radius: 12px;
+    }
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    }
+    .card-header{
+        background: linear-gradient(135deg, #2a68c4 0%, #4a8ef0 100%);
+        color: white;
+        border-radius: 12px 12px 0 0 !important;
+        padding: 1rem 1.5rem;
+        font-weight: 600;
+    }
+    
+    .card-header h5 {
+        color: white;
+        margin: 0;
+    }
+    .card-body {
+        padding: 1.5rem;
+    }
+    .table-striped > tbody > tr:nth-of-type(odd) > td {
+        background-color: rgba(102, 126, 234, 0.05);
+    }
+    .table-hover > tbody > tr:hover > td {
+        background-color: rgba(102, 126, 234, 0.1);
+        transition: background-color 0.2s;
+    }
+    .btn-outline-primary {
+        border-color: #667eea;
+        color: #2f3031;
+        background-color: white;
+    }
+    .btn-outline-primary:hover {
+        background-color: #667eea;
+        border-color: #667eea;
+        color: white;
+    }
+    .btn-outline-success {
+        border-color: #28a745;
+        color: #28a745;
+    }
+    .btn-outline-success:hover {
+        background-color: #28a745;
+        border-color: #28a745;
+        color: white;
+    }
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #dee2e6;
+        transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    }
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border: none;
+        border-radius: 8px;
+        transition: transform 0.2s;
+    }
+    .btn-primary:hover {
+        transform: scale(1.05);
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+    h3 {
+        color: #667eea;
+        font-weight: 700;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    }
+    h5, h6 {
+        color: #495057;
+        font-weight: 600;
+    }
+    #projectOverviewTable thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        letter-spacing: 0.5px;
+    }
+    .table-responsive::-webkit-scrollbar {
+        width: 8px;
+    }
+    .table-responsive::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 10px;
+    }
+    .table-responsive::-webkit-scrollbar-thumb:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+    }
+    .project-overview-scroll {
+        /* Limit visible rows to approximately 5 rows (each row ~60px) */
+        max-height: 350px;
+    }
+    .project-overview-scroll tbody tr {
+        height: 60px;
+    }
+
+/* Scrollable tasks container (only applied when needed) */
+.scrollable-tasks {
+    max-height: 300px; /* adjust height as needed */
+    overflow-y: auto;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+    background-color: #fff;
+}
+
+/* Optional smooth, modern scrollbar */
+.scrollable-tasks::-webkit-scrollbar {
+    width: 8px;
+}
+.scrollable-tasks::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+}
+.scrollable-tasks::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, 0.4);
+}
+
+/* Task item layout */
+.scrollable-tasks .list-group-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+/* Container for task title + assigned name */
+.scrollable-tasks .task-info {
+    flex: 1 1 auto;   /* allow shrinking */
+    min-width: 0;     /* crucial for ellipsis inside flex */
+    overflow: hidden; /* hide overflow */
+}
+
+/* Task title ellipsis */
+.scrollable-tasks .task-title,
+.scrollable-tasks .assigned-to {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+}
+
+/* Badge stays intact and doesn’t shrink */
+.scrollable-tasks .list-group-item .badge {
+    flex-shrink: 0;
+    margin-left: 10px;
+}
+
+
+  
+/* No matching teams message styling */
+#noProjectsFound {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    min-height: 300px;
+  }
+  
+  #noProjectsFound i {
+    font-size: 3rem;
+    color: #ccc;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+  }
+  
+  #noProjectsFound p {
+    margin: 0;
+  }
+  
+  #noProjectsFound p:first-of-type {
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-color);
+    margin-bottom: 0.5rem;
+  }
+  
+  #noProjectsFound p:last-of-type {
+    font-size: 0.9rem;
+    color: var(--text-color);
+    opacity: 0.7;
+  }
+
+  

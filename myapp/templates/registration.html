@@ -1,0 +1,376 @@
+{% extends 'base.html'%} {% load static %} {% block content %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/register.css' %}" />
+{% endblock style %}
+
+<div class="container-fluid">
+<div class="d-flex justify-content-center align-items-center ">
+  <h3 class="mb-0">Registration</h3>
+</div>
+
+<div class="registration-wrapper">
+  <div class="registration-container">
+    <!-- Welcome Section -->
+    <div class="welcome-section">
+      <h2>Welcome!</h2>
+      <p>Register to access the dashboard</p>
+    </div>
+
+    <!-- Form Section -->
+    <div class="form-section">
+      <!-- <button class="theme-toggle" id="themeToggle">
+        <i class="bi bi-moon-fill"></i>
+      </button> -->
+
+      <div class="form-container">
+        <form
+          method="POST"
+          action="{% url 'index' %}"
+          enctype="multipart/form-data"
+          id="registrationForm"
+          novalidate
+        >
+          {% csrf_token %}
+
+          <div class="form-grid">
+            <!-- Column 1 -->
+            <div class="form-group">
+              <label for="empid_display">Employee ID</label>
+              <input
+                type="text"
+                id="empid_display"
+                value="{{ next_empid }}"
+                disabled
+              />
+              <input
+                type="hidden"
+                name="empid"
+                id="empid"
+                value="{{ next_empid }}"
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="username">Username</label>
+              <input type="text" name="username" id="username" required  placeholder="Enter Username" />
+            </div>
+
+            <!-- Column 2 -->
+            <div class="form-group">
+              <label for="email">Email</label>
+              <input type="email" name="email" id="email" required  placeholder="Enter Email"/>
+            </div>
+
+            <div class="form-group">
+              <label for="phone">Phone Number</label>
+              <input
+                type="tel"
+                name="phone"
+                id="phone"
+                maxlength="10"
+                required placeholder="Enter Phone Number"
+              />
+            </div>
+
+            <!-- Role Field -->
+            <div class="form-group full-width">
+              <label for="role">Role</label>
+              <select name="role" id="role" required>
+                <option disabled selected>Select Role</option>
+                <option value="Manager">Manager</option>
+                <option value="Developer">Developer</option>
+                <option value="Team Lead">Team Lead</option>
+                <option value="Tester">Tester</option>
+                <option value="Designer">Designer</option>
+                <option value="HR">HR</option>
+              </select>
+            </div>
+
+            <div class="form-group password-group full-width">
+              <label for="password">Password</label>
+              <div class="password-container">
+                <input type="password" name="password" id="password" required placeholder="Enter Password" />
+                <i id="togglePassword" class="bi bi-eye-slash"></i>
+              </div>
+            </div>
+
+            <div class="form-group password-group full-width">
+              <label for="confirmPassword">Confirm Password</label>
+              <div class="password-container">
+                <input type="password" id="confirmPassword" required  placeholder="Enter Confirm Password"/>
+                <i id="toggleConfirmPassword" class="bi bi-eye-slash"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="button-group">
+            <button type="submit" class="btn-register">Register</button>
+            <button type="reset" class="btn btn-danger">Reset</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+  // =====================
+  // Theme Toggle
+  // =====================
+  // const themeToggle = document.getElementById("themeToggle");
+  // const themeIcon = themeToggle.querySelector("i");
+
+  // const currentTheme =
+  //   localStorage.getItem("theme") ||
+  //   (window.matchMedia("(prefers-color-scheme: dark)").matches
+  //     ? "dark"
+  //     : "light");
+
+  // document.documentElement.setAttribute("data-theme", currentTheme);
+
+  // if (currentTheme === "dark") {
+  //   themeIcon.classList.remove("bi-moon-fill");
+  //   themeIcon.classList.add("bi-sun-fill");
+  // }
+
+  // themeToggle.addEventListener("click", () => {
+  //   const currentTheme = document.documentElement.getAttribute("data-theme");
+  //   const newTheme = currentTheme === "dark" ? "light" : "dark";
+
+  //   document.documentElement.setAttribute("data-theme", newTheme);
+  //   localStorage.setItem("theme", newTheme);
+
+  //   themeIcon.classList.toggle("bi-moon-fill");
+  //   themeIcon.classList.toggle("bi-sun-fill");
+  // });
+
+  // =====================
+  // Password Visibility Toggle
+  // =====================
+  const togglePassword = document.getElementById("togglePassword");
+  const password = document.getElementById("password");
+  const toggleConfirmPassword = document.getElementById(
+    "toggleConfirmPassword"
+  );
+  const confirmPassword = document.getElementById("confirmPassword");
+
+  togglePassword.addEventListener("click", function () {
+    const type =
+      password.getAttribute("type") === "password" ? "text" : "password";
+    password.setAttribute("type", type);
+    this.classList.toggle("bi-eye");
+    this.classList.toggle("bi-eye-slash");
+  });
+
+  toggleConfirmPassword.addEventListener("click", function () {
+    const type =
+      confirmPassword.getAttribute("type") === "password" ? "text" : "password";
+    confirmPassword.setAttribute("type", type);
+    this.classList.toggle("bi-eye");
+    this.classList.toggle("bi-eye-slash");
+  });
+
+  // =====================
+  // Form Validation
+  // =====================
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById("registrationForm");
+
+    // Fields
+    const username = document.getElementById("username");
+    const email = document.getElementById("email");
+    const phone = document.getElementById("phone");
+    const role = document.getElementById("role");
+    const password = document.getElementById("password");
+    const confirmPassword = document.getElementById("confirmPassword");
+      // Clear all errors and input fields on reset
+    form.addEventListener("reset", function () {
+      // Clear error messages
+      const errors = form.querySelectorAll(".error-message");
+      errors.forEach((error) => error.remove());
+
+      // Remove invalid class from inputs
+      const inputs = form.querySelectorAll("input, select");
+      inputs.forEach((input) => input.classList.remove("is-invalid"));
+
+      // Reset password toggle icons if visible
+      if (password.type === "text") {
+        password.type = "password";
+        togglePassword.classList.add("bi-eye-slash");
+        togglePassword.classList.remove("bi-eye");
+      }
+      if (confirmPassword.type === "text") {
+        confirmPassword.type = "password";
+        toggleConfirmPassword.classList.add("bi-eye-slash");
+        toggleConfirmPassword.classList.remove("bi-eye");
+      }
+    });
+
+
+    // Utility to show error
+    function showError(input, message) {
+      // Always attach error under the parent .form-group (not password-container)
+      const formGroup = input.closest(".form-group");
+      let error = formGroup.querySelector(".error-message");
+
+      if (!error) {
+        error = document.createElement("div");
+        error.className = "error-message text-danger mt-1";
+        formGroup.appendChild(error);
+      }
+      error.textContent = message;
+      input.classList.add("is-invalid");
+    }
+
+    // Utility to clear error
+    function clearError(input) {
+      const formGroup = input.closest(".form-group");
+      let error = formGroup.querySelector(".error-message");
+      if (error) error.remove();
+      input.classList.remove("is-invalid");
+    }
+    // Validations
+    function validateUsername() {
+      if (!username.value.trim()) {
+        showError(username, "Username is required");
+        return false;
+      } else if (username.value.length > 20) {
+        showError(username, "Max 20 characters allowed");
+        return false;
+      }
+      clearError(username);
+      return true;
+    }
+2
+    function validateEmail() {
+      const pattern = /^[a-zA-Z0-9._%+-]+@avsys\.in$/;
+      if (!email.value.trim()) {
+        showError(email, "Email is required");
+        return false;
+      } else if (!pattern.test(email.value)) {
+        showError(email, "Email must end with @avsys.in");
+        return false;
+      }
+      clearError(email);
+      return true;
+    }
+
+    function validatePhone() {
+      // Restrict typing to numbers only
+      phone.addEventListener("keypress", function (e) {
+        const char = String.fromCharCode(e.which);
+        if (!/[0-9]/.test(char)) {
+          e.preventDefault(); // block non-numeric input
+        }
+      });
+
+      // Prevent pasting invalid characters
+      phone.addEventListener("paste", function (e) {
+        let pasteData = (e.clipboardData || window.clipboardData).getData(
+          "text"
+        );
+        if (!/^\d+$/.test(pasteData)) {
+          e.preventDefault();
+        }
+      });
+
+      // Enforce max length = 10
+      if (phone.value.length > 10) {
+        phone.value = phone.value.slice(0, 10);
+      }
+
+      // Validate Indian phone number format
+      const pattern = /^[6-9]\d{9}$/;
+      if (!phone.value.trim()) {
+        showError(phone, "Phone Number is required");
+        return false;
+      } else if (!pattern.test(phone.value)) {
+        showError(phone, "Enter valid Indian phone number");
+        return false;
+      }
+      clearError(phone);
+      return true;
+    }
+
+    function validateRole() {
+      if (!role.value || role.value === "Select Role") {
+        showError(role, "Select a Role");
+        return false;
+      }
+      clearError(role);
+      return true;
+    }
+
+    function validatePassword() {
+      const pattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/;
+      if (!password.value.trim()) {
+        showError(password, "Password is required");
+        return false;
+      } else if (!pattern.test(password.value)) {
+        showError(
+          password,
+          "Password must contain 1 uppercase, 1 lowercase, 1 number, 1 special character (min 8 chars)"
+        );
+        return false;
+      }
+      clearError(password);
+      return true;
+    }
+
+    function validateConfirmPassword() {
+      if (!confirmPassword.value.trim()) {
+        showError(confirmPassword, "Confirm Password is required");
+        return false;
+      } else if (confirmPassword.value !== password.value) {
+        showError(confirmPassword, "Passwords do not match");
+        return false;
+      }
+      clearError(confirmPassword);
+      return true;
+    }
+
+    // Live validation (on typing)
+    username.addEventListener("input", validateUsername);
+    email.addEventListener("input", validateEmail);
+    phone.addEventListener("input", validatePhone);
+    role.addEventListener("input", validateRole);
+    password.addEventListener("input", () => {
+      validatePassword();
+      validateConfirmPassword();
+    });
+    confirmPassword.addEventListener("input", validateConfirmPassword);
+
+    // Final form validation
+    form.addEventListener("submit", function (e) {
+      let valid =
+        validateUsername() &
+        validateEmail() &
+        validatePhone() &
+        validateRole() &
+        validatePassword() &
+        validateConfirmPassword();
+
+      if (!valid) {
+        e.preventDefault(); // stop form submission if invalid
+      } else {
+        e.preventDefault(); // prevent default just for toastr demo
+      toastr.success("Registration Successful!", "Success", {
+          closeButton: true,   // shows a close (×) button
+          timeOut: 3000,       // auto close after 3 seconds
+          progressBar: true    // shows the progress bar timer
+      });
+
+        // Submit after short delay (to show toastr)
+        setTimeout(() => {
+          form.submit();
+        }, 1500);
+      }
+    });
+  });
+
+
+</script>
+
+{% endblock %}

@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/profile.css' %}">
+{% endblock style %}
+
+{% block content %}
+<div class="container-fluid">
+ <div class="d-flex align-items-center justify-content-center mb-4" style="min-height: 60px;">
+        <h2>Profile</h2>
+    </div>
+                <div class="row">
+        <!-- LEFT PROFILE CARD -->
+        <div class="col-md-4">
+            <div class="card shadow-sm">
+                <div class="card-body text-center">
+                    <div class="mb-3">
+                        {% if user.userprofile.profile_picture %}
+                            <img src="{{ user.userprofile.profile_picture.url }}" alt="Profile Picture"
+                                 class="rounded-circle img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;">
+                        {% else %}
+                            <i class="bi bi-person-circle" style="font-size: 4rem; color: #0d6efd;"></i>
+                        {% endif %}
+                    </div>
+                    
+                    <h4 class="card-title mb-2">{{ user.username }}</h4>
+                    <p>{{ user.userprofile.role }}</p>
+                    <p>Employee ID: {{ user.userprofile.empid }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PROFILE INFO CARD -->
+        <!-- Added mt-4 mt-md-0 to push it down only on small screens -->
+        <div class="col-md-8 mt-4 mt-md-0">
+            <div class="card shadow-sm">
+                <div class="card-body">
+                    <h5 class="card-title mb-4">Profile Information</h5>                   
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Username</label>
+                            <p class="mb-0">{{ user.username }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Email</label>
+                            <p class="mb-0">{{ user.userprofile.email }}</p>
+                        </div>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Phone</label>
+                            <p class="mb-0">{{ user.userprofile.phone|default:"Not provided" }}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Role</label>
+                            <p class="mb-0">{{ user.userprofile.role }}</p>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Teams</label>
+                            <p class="mb-2">
+                                {% if user_teams_with_role %}
+                                    {% for t in user_teams_with_role %}
+                                        <span class="badge bg-secondary me-1">{{ t.label }}</span>
+                                    {% endfor %}
+                                {% else %}
+                                    No Team
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div> <!-- End Right Card -->
+    </div>
+</div>
+{% endblock %}

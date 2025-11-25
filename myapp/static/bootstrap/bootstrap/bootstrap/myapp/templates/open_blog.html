@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{% block title %}{{ blog.title }}{% endblock title %}
+
+{% block blog %}
+    <div class="container mt-4">
+        <h1> Title:{{ blog.title }}</h1>
+        <p>Descrption:{{ blog.description }}</p>
+
+        <h3>Paragraphs</h3>
+        
+        {% if paragraphs %}
+            <table class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Paragraph Title</th>
+                        <th scope="col">Description</th>
+                        <th scope="col">Image</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for paragraph in paragraphs %}
+                        <tr>
+                            <th scope="row">{{ forloop.counter }}</th>
+                            <td>{{ paragraph.paratitle }}</td>
+                            <td>{{ paragraph.paradescription }}</td>
+                            <td>
+                                {% if paragraph.image %}
+                                    <img src="{{ paragraph.image.url }}" alt="{{ paragraph.paratitle }}" class="img-fluid" style="max-width: 100px;">
+                                {% else %}
+                                    No image
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No paragraphs available for this blog.</p>
+        {% endif %}
+    </div>
+{% endblock blog %}

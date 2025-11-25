@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/logs.css' %}" />
+{% endblock style %}
+
+{% block content %}
+
+
+<div class="container-fluid ">
+    <div class="d-flex align-items-center justify-content-center " style="min-height: 60px;">
+        <h3>Activity Logs</h3>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="filters-section">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" class="form-control" id="logSearch" placeholder="Search logs..." />
+                </div>
+            </div>
+
+         <div class="col-md-2">
+            <input type="date" class="form-control" id="fromDate" placeholder="From Date" />
+        </div>
+
+        <div class="col-md-2">
+            <input type="date" class="form-control" id="toDate" placeholder="To Date" />
+        </div>
+
+
+            <div class="col-md-3">
+                <select class="form-select" id="actionFilter">
+                    <option value="">All Actions</option>
+                    <option value="CREATED">Created</option>
+                    <option value="UPDATED">Updated</option>
+                    <option value="DELETED">Deleted</option>
+                    <option value="LOGGED_IN">Logged In</option>
+                    <option value="CHANGED">Changed</option>
+                </select>
+            </div>
+
+            <div class="col-md-2">
+                <button class="btn btn-outline-secondary w-100" id="resetFilters">
+                    <i class="bi bi-arrow-counterclockwise"></i> Reset
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Timestamp</th>
+                            <th>User</th>
+                            <th>Action</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in logs %}
+                        <tr>
+                            <td>{{ log.timestamp|date:"M d, Y, h:i:s A" }}</td>
+                            <td>{{ log.user.username|default:"System" }}</td>
+                            <td>
+                                <span class="badge
+                                    {% if 'DELETED' in log.action_type %}bg-danger
+                                    {% elif 'UPDATED' in log.action_type or 'CHANGED' in log.action_type %}bg-warning text-dark
+                                    {% elif 'CREATED' in log.action_type %}bg-success
+                                    {% elif 'LOGGED_IN' in log.action_type %}bg-primary
+                                    {% else %}bg-secondary
+                                    {% endif %}">
+                                    {{ log.action_type }}
+                                </span>
+                            </td>
+                            <td>{{ log.description }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr id="noLogFound" class="empty-row">
+                            <td colspan="4">
+                              <div class="no-log-wrapper">
+                                <i class="bi bi-journal-x" aria-hidden="true"></i>
+                                <p>No log entries found</p>
+                              </div>
+                            </td>
+                          </tr>
+                          
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block script %}
+
+<script src="{% static 'js/logs.js' %}"></script>
+{% endblock script %}

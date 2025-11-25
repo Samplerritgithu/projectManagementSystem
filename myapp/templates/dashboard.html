@@ -1,0 +1,185 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}" />
+{% endblock style %}
+{% block content %}
+<div class="container-fluid mt-3 pb-5">
+    <!-- Header Section -->
+    <div class="header-bar d-flex align-items-center position-relative mb-4">
+  <h3 class="mb-0 flex-grow-1 text-center">Dashboard</h3>
+  <div class="ms-auto">
+    <button class="btn btn-primary" onclick="refreshDashboard()">
+      <i class="bi bi-arrow-clockwise"></i> Refresh
+    </button>
+  </div>
+</div>
+
+
+
+    
+ <div class="row mb-4">
+    <!-- Total Tasks Card -->
+    <div class="col-md-3">
+        <div id="total-tasks-card" class="card stat-card text-white h-100 clickable-card" style="background: linear-gradient(135deg, #db9224, #d1a90b); box-shadow: 0 4px 20px rgba(0, 0, 50, 0.4); border: none;" >
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1">Total Tasks</h6>
+                        <h2 class="display-4 mb-0" id="total-tasks">0</h2>
+                        <div class="small text-muted" id="total-tasks-note"></div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-list-task"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Completed Tasks Card -->
+    <div class="col-md-3">
+        <div id="completed-tasks-card" class="card stat-card bg-success text-white h-100 clickable-card" >
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1">Completed Tasks</h6>
+                        <h2 class="display-4 mb-0" id="completed-tasks">0</h2>
+                        <div class="small text-muted" id="completed-tasks-note"></div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overdue Tasks Card -->
+    <div class="col-md-3">
+        <div id="overdue-tasks-card" class="card stat-card bg-danger text-white h-100 clickable-card" >
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1">Overdue Tasks</h6>
+                        <h2 class="display-4 mb-0" id="overdue-tasks">0</h2>
+                        <div class="small text-muted" id="overdue-tasks-note"></div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Projects Card -->
+    <div class="col-md-3">
+        <div id="active-projects-stat-card" class="card stat-card bg-info text-white h-100 clickable-card" >
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="card-title mb-1">Active Projects</h6>
+                        <h2 class="display-4 mb-0" id="active-projects">0</h2>
+                        <div class="small text-muted" id="active-projects-note"></div>
+                    </div>
+                    <div class="stat-icon">
+                        <i class="bi bi-folder"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+    <!-- Main Content -->
+    <div class="row">
+        <!-- Left Column -->
+        <div class="col-md-6">
+            <!-- Recent Tasks Card -->
+            <div class="card mb-4">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-check me-2"></i>Recent Tasks
+                    </h5>
+                    <a href="{% url 'tasks' %}" id="viewAllTasksBtn" class="btn btn-sm btn-outline-primary">
+                        View All <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush scroll-list" id="recent-tasks">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Task Status Chart Card -->
+            <div class="card chart-card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-pie-chart me-2"></i>Task Status Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="taskStatusEmpty" class="text-muted text-center" style="display:none;">
+                         No task distribution data
+                    </div>
+                    <canvas id="taskStatusChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column -->
+        <div class="col-md-6">
+            <!-- Active Projects Card -->
+            <div class="card mb-4" id="active-projects-card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-folder me-2"></i>Active Projects
+                    </h5>
+                    <a href="{% url 'projects' %}" id="ViewAllProjectsBtn" class="btn btn-sm btn-outline-primary">
+                        View All <i class="bi bi-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="list-group list-group-flush scroll-list" id="active-projects-list">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Project Progress Chart Card -->
+            <div class="card chart-card">
+                <div class="card-header bg-white">
+                    <h5 class="mb-0">
+                        <i class="bi bi-bar-chart me-2"></i>Project Progress
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div id="projectProgressEmpty" class="text-muted text-center" style="display:none;">
+                         No project progress data
+                    </div>
+                    <canvas id="projectProgressChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+{% block script %}
+<script>
+    const DASHBOARD_DATA_URL = "{% url 'dashboard_data' %}";
+    const TASKS_URL = "{% url 'tasks' %}";
+    const PROJECTS_URL = "{% url 'projects' %}";
+</script>
+<script src="{% static 'js/dashboard.js' %}"></script>
+{% endblock script %}

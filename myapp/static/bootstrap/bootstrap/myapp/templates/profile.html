@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% load static %}
+{% block profile %}
+  <h4 class="text-center mt-4">Profiles</h4>
+  <div class="d-flex justify-content-end"style="margin-top: -40px;">
+    <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#createProfileModal">
+      <span class="fs-7">Create</span>
+    </button>
+  </div>
+  <!-- Button to open modal for creating new profile -->
+ 
+
+  <!-- Table displaying profiles -->
+  <table class="table table-striped mt-3">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Phone</th>
+        <th>Gender</th>
+        <th>Password</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for profile in profiles %}
+        <tr>
+          <td>{{ profile.name }}</td>
+          <td>{{ profile.email }}</td>
+          <td>{{ profile.phone }}</td>
+          <td>{{ profile.gender }}</td>
+          <td>{{ profile.password }}</td>
+          <td>
+            <!-- Button to trigger modal for updating -->
+            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#updateModal{{ profile.id }}">Update</button>
+            <!-- Delete Button -->
+            <form action="{% url 'delete_profile' profile.id %}" method="POST" style="display:inline;">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-danger">Delete</button>
+            </form>
+           
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Modal for creating new profile -->
+  <div class="modal fade" id="createProfileModal" tabindex="-1" aria-labelledby="createProfileModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="createProfileModalLabel">Create Profile</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <form method="POST" action="{% url 'create_profile' %}">
+            {% csrf_token %}
+            <div class="mb-3">
+              <label for="name" class="form-label">Name</label>
+              <input type="text" class="form-control" id="name" name="name" required>
+            </div>
+            <div class="mb-3">
+              <label for="email" class="form-label">Email</label>
+              <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+              <label for="phone" class="form-label">Phone</label>
+              <input type="text" class="form-control" id="phone" name="phone" maxlength="10" required>
+            </div>
+            <div class="mb-3">
+              <label for="gender" class="form-label">Gender</label>
+              <select class="form-select" id="gender" name="gender">
+                <option value="">Select Gender</option>
+                <option value="Male">Male</option>
+                <option value="Female">Female</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="mb-3">
+              <label for="password" class="form-label">Password</label>
+              <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-success">Create Profile</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal for updating profile -->
+  {% for profile in profiles %}
+    <div class="modal fade" id="updateModal{{ profile.id }}" tabindex="-1" aria-labelledby="updateModalLabel{{ profile.id }}" aria-hidden="true">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="updateModalLabel{{ profile.id }}">Update Profile</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <form method="POST" action="{% url 'update_profile' profile_id=profile.id %}">
+              {% csrf_token %}
+              <div class="mb-3">
+                <label for="name{{ profile.id }}" class="form-label">Name</label>
+                <input type="text" class="form-control" id="name{{ profile.id }}" name="name" value="{{ profile.name }}" required>
+              </div>
+              <div class="mb-3">
+                <label for="email{{ profile.id }}" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email{{ profile.id }}" name="email" value="{{ profile.email }}" required>
+              </div>
+              <div class="mb-3">
+                <label for="phone{{ profile.id }}" class="form-label">Phone</label>
+                <input type="text" class="form-control" id="phone{{ profile.id }}" name="phone" value="{{ profile.phone }}" required>
+              </div>
+              <div class="mb-3">
+                <label for="gender{{ profile.id }}" class="form-label">Gender</label>
+                <select class="form-select" id="gender{{ profile.id }}" name="gender">
+                  <option value="Male" {% if profile.gender == "Male" %}selected{% endif %}>Male</option>
+                  <option value="Female" {% if profile.gender == "Female" %}selected{% endif %}>Female</option>
+                  <option value="Other" {% if profile.gender == "Other" %}selected{% endif %}>Other</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label for="password{{ profile.id }}" class="form-label">Password</label>
+                <div class="input-group">
+                  <input type="password" class="form-control" id="password{{ profile.id }}" name="password" value="{{ profile.password }}" required>
+                  <span class="input-group-text" id="togglepassword{{ profile.id }}">
+                    <i class="bi bi-eye-slash" id="eyeIcon{{ profile.id }}"></i>
+                  </span>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">Save Changes</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const togglePasswordIcon = document.getElementById('togglepassword{{ profile.id }}');
+      const passwordInput = document.getElementById('password{{ profile.id }}');
+      const eyeIcon = document.getElementById('eyeIcon{{ profile.id }}');
+  
+      togglePasswordIcon.addEventListener('click', function () {
+        // Toggle the password visibility
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text";
+          eyeIcon.classList.remove("bi-eye-slash");
+          eyeIcon.classList.add("bi-eye");
+        } else {
+          passwordInput.type = "password";
+          eyeIcon.classList.remove("bi-eye");
+          eyeIcon.classList.add("bi-eye-slash");
+        }
+      });
+    });
+  </script>
+
+{% endblock %}

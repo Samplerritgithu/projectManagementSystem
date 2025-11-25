@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}FAQs{% endblock title %}
+
+{% block styles %}
+<style>
+    #add-faq-btn {
+        font-size: 30px;
+        width: 500px;
+        height: 500px;
+        border-radius: 50%;
+        background-color: #070707FF;
+        color: white;
+        border: none;
+        cursor: pointer;
+        display: inline-block;
+        text-align: center;
+        position: absolute;
+        top: 200px;  
+        left:500px; 
+        z-index: 1;  
+    }
+
+    #add-faq-btn:hover {
+        background-color: #191A19FF;
+    }
+
+    /* Card styles */
+    .faq-card {
+        padding: 20px;
+        margin-top: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block faqs %}
+<h1 class="text-center">FAQs</h1>
+
+<!-- Card Wrapper for the FAQ Section -->
+<div class="card faq-card">
+    <div class="card-header text-center">
+        <h3>Frequently Asked Questions</h3>
+    </div>
+    <div class="d-flex justify-content-end" style="margin-top: -50px;">
+        <button id="add-faq-btn" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#faqModal">Add FAQ</button>
+    </div>
+   
+    <div class="card-body">
+      
+
+        <!-- Display Existing FAQs -->
+        <div class="faq-list mt-4">
+            {% for faq in faqs %}
+                <div class="faq-item mb-3 p-3 border rounded d-flex justify-content-between">
+                    <p>Id:{{faq.id}}</p>
+                    <p>User:{{faq.user.username}}</p>
+                    <h5>Question: {{ faq.question }}</h5>
+                    <p>Answer: {{ faq.answer }}</p>
+                    <div class='text-center'>
+                        <a href="{% url 'delete_faq' faq.id %}" class="btn btn-warning">Delete</a>
+                    </div>
+                </div>
+            {% empty %}
+                <p>No FAQs available.</p>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Modal for Adding New FAQ -->
+<div class="modal fade" id="faqModal" tabindex="-1" aria-labelledby="faqModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="faqModalLabel">Add New FAQ</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{% url 'create_FAQ' %}">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        {{ form.as_p }}  <!-- Render the form fields as <p> elements -->
+                    </div>
+                    <button type="submit" class="btn btn-primary">Submit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<!-- Include Bootstrap JS and dependencies -->
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.min.js"></script>
+{% endblock %}

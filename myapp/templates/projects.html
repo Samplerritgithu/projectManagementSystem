@@ -1,0 +1,450 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block style %}
+<link rel="stylesheet" href="{% static 'css/projects.css' %}" />
+<link rel="stylesheet" href="{% static 'css/modals.css' %}" />
+{% endblock style %}
+
+{% block content %}
+<!-- Projects page fonts -->
+<div class="container-fluid  ">
+<div class="d-flex align-items-center justify-content-between " style="min-height: 60px;">
+  <h3 class="position-absolute start-50 translate-middle-x mb-0">Projects</h3>
+  {% if request.user.userprofile.role == "Manager" or request.user.userprofile.role == "Team Lead" %}
+  <button class="btn btn-primary ms-auto" data-bs-toggle="modal" data-bs-target="#addProjectModal" id="addproject1" style="display: block;">
+    <i class="bi bi-plus-circle"></i> Add Project
+  </button>
+  {% endif %}
+</div>
+
+
+    <!-- Project Filters -->
+    <div class="card mb-4 filters-card" id="filtersCard">
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="projectSearch" placeholder="Search projects...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="statusFilter">
+                        <option value="">All Statuses</option>
+                        <option value="In Progress">In Progress</option>
+                        <option value="On Hold">On Hold</option>
+                        <option value="Completed">Completed</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="clientFilter">
+                        <option value="">All Clients</option>
+                        {% for client in clients %}
+                        <option value="{{ client.id }}">{{ client.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button class="btn btn-outline-secondary w-100" id="resetFilters">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Projects Grid -->
+    <div class="row" id="projectsGrid">
+        {% for project in projects %}
+        <div class="col-lg-4 col-md-6 mb-4 project-card" data-status="{{ project.status }}" data-client="{{ project.client.id }}">
+            <div class="card h-100 project-card-inner" data-project-id="{{ project.id }}" style="cursor: pointer;">
+                <div class="card-header">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <small class="text-muted d-block mb-1">Project ID: {{ project.project_id|default:"N/A" }}</small>
+                            <h5 class="mb-0 project-title" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ project.name }}">{{ project.name }}</h5>
+                        </div>
+                        <span class="badge flex-shrink-0 status-badge-{{ project.status|lower|cut:" " }}">
+                            {% if project.status == "In Progress" %}⚡{% elif project.status == "On Hold" %}⏸️{% elif project.status == "Completed" %}✅{% endif %} {{ project.status }}
+                        </span>
+                    </div>
+                </div>
+                <div class="card-body d-flex flex-column">
+                    <div class="mb-3">
+                        <strong class="text-dark">Description:</strong>
+                        <p  class="mb-0 project-description">{{ project.description|truncatewords:20 }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <strong class="text-dark">Client:</strong>
+                        <p class="mb-0 project-client">{{ project.client.name }}</p>
+                    </div>
+                    <div class="mb-3">
+                       <strong class="text-dark">Start Date:</strong>
+                        <p class="mb-0 text-dark">{{ project.start_date|date:"M d, Y" }}</p>
+                    </div>
+                    <div class="mb-3">
+                          <strong class="text-dark">End Date:</strong>
+                        <p class="mb-0 text-dark">{{ project.end_date|date:"M d, Y" }}</p>
+                    </div>
+                    <div class="mb-3">
+                        <div class="progress-wrap">
+                            <div class="progress-ring" data-progress="{{ project.progress }}">
+                                <svg viewBox="0 0 100 100">
+                                    <defs>
+                                        <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="0%">
+                                            <stop offset="0%" stop-color="#00d4ff"/>
+                                            <stop offset="100%" stop-color="#ff0080"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <circle class="bg" cx="50" cy="50" r="42"></circle>
+                                    <circle class="fg" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="264"></circle>
+                                </svg>
+                                <div class="center">{{ project.progress }}%</div>
+                            </div>
+                            <div class="progress-meta">
+                                <span class="label">Progress</span>
+                                <span class="value">{{ project.progress }}% complete</span>
+                                <div class="mt-1">
+                                    <span class="chip"><i class="bi bi-person"></i> {{ project.client.name }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+  <div id="noProjectsFound" class="text-center" style="display: none;">
+    <i class="bi bi-search"></i>
+    <p>No matching projects found</p>
+  </div>
+    </div>
+</div>
+<div class="modal fade" id="addProjectModal" tabindex="-1" aria-labelledby="addProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content shadow-lg rounded-4">
+            <div class="modal-header">
+                <h5 class="modal-title text-white fw-bold" id="addProjectModalLabel">
+                    <i class="bi bi-folder-plus me-2"></i> Add New Project
+                </h5>
+            </div>
+
+            <div class="modal-body">
+                <form id="addProjectForm" novalidate onsubmit="return false;">
+                    {% csrf_token %}
+                    <input type="hidden" id="addProjectHiddenMarker" value="">
+
+                    <!-- Project ID -->
+                    <div class="mb-3 border-bottom pb-3">
+                        <label for="projectId" class="form-label">
+                            <i class="bi bi-hash me-2"></i> Project ID
+                        </label>
+                        <input type="text" class="form-control" id="projectId" readonly disabled>
+                        <small class="form-text">Project ID cannot be changed</small>
+                    </div>
+
+                    <!-- Project Name -->
+                    <div class="mb-3 border-bottom pb-3">
+                        <label for="projectName" class="form-label">
+                            <i class="bi bi-card-text me-2"></i> Project Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" class="form-control" id="projectName" name="name" required maxlength="40" placeholder="Enter project name (3-40 characters)">
+                        <div class="invalid-feedback" id="projectNameError">Project name is required</div>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-3 border-bottom pb-3">
+                        <label for="projectDescription" class="form-label">
+                            <i class="bi bi-pencil-square me-2"></i> Description <span class="text-muted">(Max 100 words)</span>
+                        </label>
+                        <textarea class="form-control" id="projectDescription" name="description" rows="3" maxlength="1000"
+                            placeholder="Enter project description (max 100 words)"
+                            oninput="updateWordCount(this)"></textarea>
+                        <small class="form-text">
+                            <span id="wordCount">0</span> words used (max 100 words)
+                        </small>
+                    </div>
+
+                    <!-- Client & Status -->
+                    <div class="row mb-3 border-bottom pb-3">
+                        <div class="col-md-6 mb-3">
+                            <label for="projectClient" class="form-label">
+                                <i class="bi bi-person-badge me-2"></i> Client <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="projectClient" name="client" required>
+                                <option value="" selected disabled>👤 Select a Client</option>
+                                {% if clients %}
+                                    {% for client in clients %}
+                                        <option value="{{ client.id }}" data-icon="bi-building">🏢 {{ client.name }}</option>
+                                    {% endfor %}
+                                {% else %}
+                                    <option value="" disabled>⚠️ No clients available</option>
+                                {% endif %}
+                            </select>
+                            <div class="invalid-feedback">Select a client</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="projectStatus" class="form-label">
+                                <i class="bi bi-bar-chart-line me-2"></i> Status <span class="text-danger">*</span>
+                            </label>
+                            <select class="form-select" id="projectStatus" name="status" required>
+                                <option value="" selected disabled>📋 Select a Status</option>
+                                <option value="In Progress">⚡ In Progress</option>
+                                <option value="On Hold">⏸️ On Hold</option>
+                                <option value="Completed">✅ Completed</option>
+                            </select>
+                            <div class="invalid-feedback">Select a status</div>
+                        </div>
+                    </div>
+
+                    <!-- Dates -->
+                    <div class="row mb-3">
+                        <div class="col-md-6 mb-3">
+                            <label for="projectStartDate" class="form-label">
+                                <i class="bi bi-calendar-event me-2"></i> Start Date <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" class="form-control" id="projectStartDate" name="start_date" required>
+                            <div class="invalid-feedback">Select a start date</div>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="projectEndDate" class="form-label">
+                                <i class="bi bi-calendar-check me-2"></i> End Date <span class="text-danger">*</span>
+                            </label>
+                            <input type="date" class="form-control" id="projectEndDate" name="end_date" required>
+                            <div class="invalid-feedback">Select an end date</div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="bi bi-x-circle me-1"></i> Cancel
+                </button>
+                <button type="button" class="btn btn-primary" id="saveProjectBtn">
+                    <i class="bi bi-save me-1"></i> Save Project
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<div class="modal fade" id="viewProjectModal" tabindex="-1" aria-labelledby="viewProjectModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewProjectModalLabel">Project Details</h5>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-8">
+                        <div class="mb-2">
+                            <small class="text-muted">Project ID: <small id="viewProjectId"></small></small>
+                        </div>
+                        <h4 id="viewProjectName"></h4>
+                        <p class="text-muted" id="viewProjectClient"></p>
+                        
+                       <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Description</h5>
+                            </div>
+                            <div>
+                                <small class="card-text" id="viewProjectDescription" style="padding: 12px; display: block;"></small>
+                            </div>
+                        </div>
+
+                        
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Tasks</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group list-group-flush" id="viewProjectTasks">
+                                    <!-- Tasks will be dynamically added here -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-4">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Project Details</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Status</label>
+                                    <div id="viewProjectStatus"></div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Start Date</label>
+                                    <div id="viewProjectStartDate"></div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">End Date</label>
+                                    <div id="viewProjectEndDate"></div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Progress</label>
+                                    <div class="progress">
+                                        <div class="progress-bar" id="viewProjectProgress" role="progressbar" style="width: 0%;" 
+                                             aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="ms-auto d-flex gap-2" id="viewProjectModalFooterActions"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Project Modal -->
+<div class="modal fade" id="editProjectModal" tabindex="-1" aria-labelledby="editProjectModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content shadow-lg rounded-4">
+      <div class="modal-header">
+        <h5 class="modal-title text-primary fw-bold" id="editProjectModalLabel">
+          <i class="bi bi-pencil-square me-2"></i> Edit Project
+        </h5>
+      </div>
+
+      <div class="modal-body">
+        <form id="editProjectForm" novalidate onsubmit="return false;">
+          {% csrf_token %}
+          <input type="hidden" id="editProjectId" name="project_id">
+
+          <!-- Project ID -->
+          <div class="mb-4 border-bottom pb-3">
+            <label for="editProjectIdDisplay" class="form-label text-primary fw-semibold">
+                <i class="bi bi-hash me-2" style="color: red;"></i> Project ID
+            </label>
+            <input type="text" class="form-control" id="editProjectIdDisplay" readonly disabled>
+            <small class="form-text text-muted">Project ID cannot be changed</small>
+          </div>
+
+          <!-- Project Name -->
+          <div class="mb-4 border-bottom pb-3">
+            <label for="editProjectName" class="form-label text-primary fw-semibold">
+                <i class="bi bi-card-text me-2" style="color: teal;"></i> Project Name <span class="text-danger">*</span>
+            </label>
+            <input type="text" class="form-control" id="editProjectName" name="name"
+              required maxlength="255" placeholder="Enter project name"
+              title="Project name can contain letters, numbers, and spaces">
+            <div class="invalid-feedback">Project name is required.</div>
+          </div>
+
+          <!-- Description -->
+          <div class="mb-4 border-bottom pb-3">
+            <label for="editProjectDescription" class="form-label text-primary fw-semibold">
+            <i class="bi bi-pencil-square me-2" style="color: purple;"></i> Description <span class="text-muted">(Max 100 words)</span>
+            </label>
+            <textarea class="form-control" id="editProjectDescription" name="description" rows="3"
+              maxlength="1000" placeholder="Enter project description (max 100 words)"
+              oninput="updateEditWordCount(this)"></textarea>
+            <small class="form-text text-muted">
+              <span id="editWordCount">0</span> words used (max 100 words)
+            </small>
+          </div>
+
+          <!-- Client & Status -->
+          <div class="mb-4 border-bottom pb-3">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="editProjectClient" class="form-label text-primary fw-semibold">
+                    <i class="bi bi-person-badge me-2" style="color: brown;"></i> Client <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" id="editProjectClient" name="client" required>
+                  <option value="" disabled>👤 Select Client</option>
+                  {% if clients %}
+                  {% for client in clients %}
+                  <option value="{{ client.id }}">🏢 {{ client.name }}</option>
+                  {% endfor %}
+                  {% else %}
+                  <option value="" disabled>⚠️ No clients available</option>
+                  {% endif %}
+                </select>
+                <div class="invalid-feedback">Select a client.</div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="editProjectStatus" class="form-label text-primary fw-semibold">
+                    <i class="bi bi-bar-chart-line me-2" style="color: darkcyan;"></i> Status <span class="text-danger">*</span>
+                </label>
+                <select class="form-select" id="editProjectStatus" name="status" required>
+                  <option value="" disabled>📊 Select Status</option>
+                  <option value="In Progress">⚡ In Progress</option>
+                  <option value="On Hold">⏸️ On Hold</option>
+                  <option value="Completed">✅ Completed</option>
+                </select>
+                <div class="invalid-feedback">Select a status.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Timeline -->
+          <div class="mb-4 border-bottom pb-3">
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="editProjectStartDate" class="form-label text-primary fw-semibold">
+                    <i class="bi bi-calendar-event me-2" style="color: green;"></i> Start Date
+                </label>
+                <input type="date" class="form-control" id="editProjectStartDate" name="start_date" required>
+                <div class="invalid-feedback">Select a start date.</div>
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="editProjectEndDate" class="form-label text-primary fw-semibold">
+                    <i class="bi bi-calendar-check me-2" style="color: gray;"></i> End Date <span class="text-danger">*</span>
+                </label>
+                <input type="date" class="form-control" id="editProjectEndDate" name="end_date" required>
+                <div class="invalid-feedback">Select an end date.</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Progress -->
+          <div class="mb-4">
+            <label for="editProjectProgress" class="form-label text-primary fw-semibold">
+            <i class="bi bi-graph-up me-2" style="color: #fd7e14;"></i> Project Progress (%)
+            </label>
+            <input type="number" class="form-control" id="editProjectProgress" name="progress"
+              min="0" max="100" value="0" placeholder="Enter progress percentage">
+            <small class="form-text text-muted">Enter a value between 0 and 100</small>
+          </div>
+        </form>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+          <i class="bi bi-x-circle me-1"></i> Cancel
+        </button>
+        <button type="button" class="btn btn-primary" id="updateProjectBtn">
+          <i class="bi bi-arrow-repeat me-1"></i> Update Project
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+{% endblock %}
+{% block script %}
+<script>
+const ADD_PROJECT_URL = "{% url 'add_project' %}";
+const USER_ROLE = "{{ request.user.userprofile.role }}";
+</script>
+<script src="{% static 'js/projects.js' %}"></script>
+{% endblock script %}
