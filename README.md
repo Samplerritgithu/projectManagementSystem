@@ -94,6 +94,6 @@ Trainee
 
 HR
 
-📧 Email: Jagguuu83@gmail.com
-💼 LinkedIn: www.linkedin.com/in/jagmohandas
-🌐 GitHub: https://github.com/Jagguuuu
+📧 Email: shankarshiva74541@gmail.com
+💼 LinkedIn: https://www.linkedin.com/in/chanda-shiva-shankar-3bb6b5260/
+🌐 GitHub: https://github.com/Samplerritgithu/
